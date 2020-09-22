@@ -34,10 +34,10 @@ func (m *MockMessages) EXPECT() *MockMessagesMockRecorder {
 }
 
 // GetUnread mocks base method
-func (m *MockMessages) GetUnread() ([]msg.Message, error) {
+func (m *MockMessages) GetUnread() ([]msg.Msg, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUnread")
-	ret0, _ := ret[0].([]msg.Message)
+	ret0, _ := ret[0].([]msg.Msg)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -49,10 +49,10 @@ func (mr *MockMessagesMockRecorder) GetUnread() *gomock.Call {
 }
 
 // GetIndex mocks base method
-func (m *MockMessages) GetIndex(id int) (*msg.Message, error) {
+func (m *MockMessages) GetIndex(id int) (*msg.Msg, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetIndex", id)
-	ret0, _ := ret[0].(*msg.Message)
+	ret0, _ := ret[0].(*msg.Msg)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

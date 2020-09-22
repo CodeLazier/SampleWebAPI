@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-22 13:35:22
+ * @LastEditTime: 2020-09-22 14:34:41
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -19,18 +19,18 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-func check_idx(idx int) (*msg.Message, error) {
+func check_idx(idx int) (*msg.Msg, error) {
 	if idx < 0 {
 		return nil, errors.New("id not found")
 	}
-	return &msg.Message{Id: idx, Title: "test title"}, nil
+	return &msg.Msg{Id: idx, Title: "test title"}, nil
 
 }
 
-func check_unread() ([]msg.Message, error) {
-	r := make([]msg.Message, 0)
+func check_unread() ([]msg.Msg, error) {
+	r := make([]msg.Msg, 0)
 	for i := 0; i < 3; i++ {
-		r = append(r, msg.Message{Id: i, Title: "test title" + strconv.Itoa(i)})
+		r = append(r, msg.Msg{Id: i, Title: "test title" + strconv.Itoa(i)})
 	}
 
 	return r, nil
