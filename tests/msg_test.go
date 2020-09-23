@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-22 22:36:09
+ * @LastEditTime: 2020-09-23 11:17:41
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -97,8 +97,8 @@ func TestMSG_GetUnreadForAsync(t *testing.T) {
 		}
 
 	}()
-	var c int32
-	func(count *int32) {
+
+	c := *func(count *int32) *int32 {
 		for data := range retChan {
 			if data != nil {
 				atomic.AddInt32(count, 1) // No need for this env
@@ -107,7 +107,8 @@ func TestMSG_GetUnreadForAsync(t *testing.T) {
 				t.Error("read data is error")
 			}
 		}
-	}(&c)
+		return count
+	}(new(int32))
 
 	//if max count is 1000
 	if c < 1000-1 {
@@ -127,5 +128,11 @@ func TestMSG_GetUnread(t *testing.T) {
 	m.EXPECT().GetUnread().DoAndReturn(check_unread)
 
 	check_do_unread(m, t)
+
+}
+
+func TestMSG_GetIndex2(t *testing.T) {
+	eip := &msg.Eip{}
+	eip.GetIndex(2)
 
 }
