@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-23 11:17:41
+ * @LastEditTime: 2020-09-23 13:55:51
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -13,7 +13,6 @@ import (
 	"errors"
 	"math/rand"
 	"strconv"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -85,33 +84,35 @@ func TestMSG_GetIndex(t *testing.T) {
 //production consumer
 func TestMSG_GetUnreadForAsync(t *testing.T) {
 	rand.Seed(time.Now().Unix())
-	m := &msg.Eip{}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() //chan is close then go func exit
-	retChan := m.GetUnreadForAsync(ctx)
-	go func() {
-		select {
-		//set n mill then will timeout
-		case <-time.After(time.Duration(rand.Intn(8)) * time.Millisecond):
+
+	production := func(m *msg.Eip, c int) <-chan *msg.Msg {
+		return m.GetUnreadForAsync(ctx, c)
+	}
+
+	consumer := func(msgs <-chan *msg.Msg) int {
+		go func() {
+			<-time.After(time.Duration(rand.Intn(8)) * time.Millisecond)
 			cancel()
-		}
+		}()
 
-	}()
-
-	c := *func(count *int32) *int32 {
-		for data := range retChan {
-			if data != nil {
-				atomic.AddInt32(count, 1) // No need for this env
-				t.Log(data.Id, data.Title)
-			} else {
-				t.Error("read data is error")
+		return *func(count *int) *int {
+			for data := range msgs {
+				if data != nil {
+					*count++
+					t.Log(data.Id, data.Title)
+				} else {
+					t.Error("read data is error")
+				}
 			}
-		}
-		return count
-	}(new(int32))
+			return count
+		}(new(int))
+	}
 
 	//if max count is 1000
-	if c < 1000-1 {
+	var maxCount int = 1000
+	if consumer(production(&msg.Eip{}, maxCount)) < maxCount-1 {
 		t.Log("data is cancel")
 	} else {
 		t.Log("data is full")

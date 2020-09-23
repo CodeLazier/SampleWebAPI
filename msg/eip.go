@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:20:05
- * @LastEditTime: 2020-09-23 11:47:02
+ * @LastEditTime: 2020-09-23 13:43:41
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\db\eip.go
@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
@@ -20,10 +21,10 @@ import (
 //Eip impl
 type Eip struct {
 	db *gorm.DB
+	sync.RWMutex
 }
 
 func getData(db *gorm.DB, query interface{}, args ...interface{}) (msgs []Msg, err error) {
-	msgs = make([]Msg, 0)
 	var tx *gorm.DB
 	defer func() {
 		var r interface{}
@@ -46,10 +47,14 @@ func getData(db *gorm.DB, query interface{}, args ...interface{}) (msgs []Msg, e
 }
 
 func (t *Eip) GetUnread() ([]Msg, error) {
+	t.RLock()
+	defer t.RUnlock()
 	return getData(t.db, "read = ?", false)
 }
 
 func (t *Eip) GetIndex(idx int) (*Msg, error) {
+	t.RLock()
+	defer t.RUnlock()
 	msgs, err := getData(t.db, nil)
 	if err != nil {
 		return nil, err
@@ -62,6 +67,8 @@ func (t *Eip) GetIndex(idx int) (*Msg, error) {
 }
 
 func (t *Eip) GetAll() ([]Msg, error) {
+	t.RLock()
+	defer t.RUnlock()
 	msgs := make([]Msg, 100)
 	r := t.db.Find(&msgs)
 	if r.Error != nil {
@@ -72,6 +79,8 @@ func (t *Eip) GetAll() ([]Msg, error) {
 }
 
 func (t *Eip) MarkRead(idx int) error {
+	t.Lock()
+	defer t.Unlock()
 	return t.db.Model(&Msg{}).Where("Id = ?", idx).Update("Read", true).Error
 }
 
@@ -89,14 +98,15 @@ func (t *Eip) OpenDB(cfg string) error {
 	}
 }
 
-func (t *Eip) GetUnreadForAsync(ctx context.Context) <-chan *Msg {
+func (t *Eip) GetUnreadForAsync(ctx context.Context, maxCount int) <-chan *Msg {
 	data := make(chan *Msg, 30) //buffer channel
 	go func() {
 		defer close(data)
-		if err := t.OpenDB("xx.xx.xx.xx"); err != nil {
+		var err error
+		if err != nil { // t.OpenDB("xx.xx.xx.xx"); err != nil {
 			data <- nil
 		} else {
-			for i := 0; i < 1000; i++ {
+			for i := 0; i < maxCount; i++ {
 				select {
 				case <-ctx.Done():
 					return

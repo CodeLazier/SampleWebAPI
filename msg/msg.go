@@ -1,21 +1,19 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:18:00
- * @LastEditTime: 2020-09-23 11:14:38
+ * @LastEditTime: 2020-09-23 13:20:00
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\db\db.go
  */
 package msg
 
-import "gorm.io/gorm"
-
 type Msg struct {
-	gorm.Model        // orm map
-	Id         int    `json:"uniqueid"`
-	Title      string `json:"title" gorm:"->"`
-	Content    string `json:"content" gorm:"->"`
-	Read       bool   `json:"read"`
+	//gorm.Model        // orm map
+	Id      int    `json:"id"`
+	Title   string `json:"title" gorm:"->"`
+	Content string `json:"content" gorm:"->"`
+	Read    bool   `json:"read"`
 	//...
 }
 
