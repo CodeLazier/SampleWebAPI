@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 10:52:47
- * @LastEditTime: 2020-09-23 13:29:55
+ * @LastEditTime: 2020-09-23 14:48:14
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\main.go
@@ -9,10 +9,14 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
 	"test/msg"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -75,8 +79,32 @@ func main() {
 		getToken(c)
 	})
 
-	//do config
-	if err := r.Run(":9090"); err != nil {
-		log.Fatal(err)
+	server := &http.Server{
+		Addr:         ":9090",
+		Handler:      r,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
 	}
+
+	go func() {
+		//do config
+		if err := server.ListenAndServe(); err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+
+	log.Println("Shutdown Server ...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal("Server Shutdown:", err)
+	}
+
+	<-ctx.Done()
+
 }

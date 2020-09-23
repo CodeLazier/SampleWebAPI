@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-23 13:55:51
+ * @LastEditTime: 2020-09-23 14:02:34
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -81,7 +81,7 @@ func TestMSG_GetIndex(t *testing.T) {
 }
 
 //add flag -v and clear test cache (set flag -count=1)
-//production consumer
+//production consumer design
 func TestMSG_GetUnreadForAsync(t *testing.T) {
 	rand.Seed(time.Now().Unix())
 	ctx, cancel := context.WithCancel(context.Background())
