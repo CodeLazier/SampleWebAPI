@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-24 15:03:43
+ * @LastEditTime: 2020-09-24 15:53:38
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -48,7 +48,6 @@ func check_do_id(m *msgmock.MockMessages, t *testing.T, idx int) (*msg.Msg, erro
 	} else {
 		return msg, err
 	}
-
 }
 
 func check_do_unread(m *msgmock.MockMessages, t *testing.T) {
@@ -71,14 +70,14 @@ func TestMSG_GetIndex(t *testing.T) {
 	check_do_id(m, t, 0)
 	check_do_id(m, t, -10)
 
-	for i := 0; i < 10; i++ {
-		msg := &msg.Eip{}
-		if ms, err := msg.GetIndex(i); err != nil {
-			t.Error(err)
-		} else if ms.Id != i {
-			t.Errorf("id is difference for:%d", i)
-		}
-	}
+	// for i := 0; i < 10; i++ {
+	// 	msg := &msg.Eip{}
+	// 	if ms, err := msg.GetIndex(i); err != nil {
+	// 		t.Error(err)
+	// 	} else if ms.Id != i {
+	// 		t.Errorf("id is difference for:%d", i)
+	// 	}
+	// }
 }
 
 //add flag -v and clear test cache (set flag -count=1)
@@ -129,11 +128,5 @@ func TestMSG_GetUnread(t *testing.T) {
 	m.EXPECT().GetUnread().DoAndReturn(check_unread)
 
 	check_do_unread(m, t)
-
-}
-
-func TestMSG_GetIndex2(t *testing.T) {
-	eip := &msg.Eip{}
-	eip.GetIndex(2)
 
 }
