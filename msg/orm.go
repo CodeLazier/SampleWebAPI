@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-24 10:35:54
- * @LastEditTime: 2020-09-24 14:18:07
+ * @LastEditTime: 2020-09-24 15:39:24
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\msg\orm.go

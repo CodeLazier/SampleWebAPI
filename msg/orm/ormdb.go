@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-24 14:20:01
- * @LastEditTime: 2020-09-24 15:35:42
+ * @LastEditTime: 2020-09-24 15:44:32
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\msg\mock\ormmock.go
@@ -21,6 +21,20 @@ import (
 type OrmDB struct {
 	db *gorm.DB
 	sync.RWMutex
+	Cfg OrmDBConfig
+}
+
+type OrmDBConfig struct {
+	DBConn string
+	//
+}
+
+func NewOrmDB(cfg OrmDBConfig) (*OrmDB, error) {
+	r := &OrmDB{Cfg: cfg}
+	if err := r.OpenOrm(cfg.DBConn); err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 
 func (t *OrmDB) OpenOrm(cfg ...string) error {

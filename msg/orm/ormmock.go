@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-24 14:20:01
- * @LastEditTime: 2020-09-24 15:25:19
+ * @LastEditTime: 2020-09-24 15:41:17
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\msg\mock\ormmock.go
@@ -14,6 +14,10 @@ import (
 )
 
 type OrmMock struct {
+}
+
+func NewOrmMock() *OrmMock {
+	return &OrmMock{}
 }
 
 //var mockData []msg.Msg
