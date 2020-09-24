@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-24 18:48:03
+ * @LastEditTime: 2020-09-24 21:13:38
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -17,7 +17,9 @@ import (
 )
 
 func TestMockOrm(t *testing.T) {
-	eip := msg.NewEip(msg.EipConfig{Orm: orm.NewOrmMock()})
+	eip := &msg.Eip{
+		Orm: orm.NewOrmMock(),
+	}
 	if msgs, err := eip.GetAll(); err != nil {
 		t.Fail()
 		t.Log(err)
@@ -53,11 +55,15 @@ func TestMockOrm(t *testing.T) {
 
 //need actual environment
 func TestDBOrm(t *testing.T) {
-	ormDB, err := orm.NewOrmDB(orm.OrmDBConfig{DBConn: "sqlserver://xx@xxx:9930?database=eip"})
+	ormDB, err := orm.NewOrmDB(orm.OrmDBConfig{
+		DBConn: "sqlserver://xx@xxx:9930?database=eip",
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	eip := msg.NewEip(msg.EipConfig{Orm: ormDB})
+	eip := &msg.Eip{
+		Orm: ormDB,
+	}
 	if msgs, err := eip.GetAll(); err != nil {
 		t.Log(err)
 		t.Fail()

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:20:05
- * @LastEditTime: 2020-09-24 15:14:10
+ * @LastEditTime: 2020-09-24 21:14:04
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\db\eip.go
@@ -14,18 +14,13 @@ import (
 	"fmt"
 )
 
-type EipConfig struct {
-	Orm OrmMsg
-	//
-}
-
 //Eip impl
 type Eip struct {
-	cfg EipConfig
+	Orm OrmMsg
 }
 
-func NewEip(cfg EipConfig) *Eip {
-	return &Eip{cfg: cfg}
+func New() *Eip {
+	return &Eip{}
 }
 
 func conv2Msg(i interface{}) ([]Msg, error) {
@@ -36,7 +31,7 @@ func conv2Msg(i interface{}) ([]Msg, error) {
 }
 
 func (t *Eip) GetUnread() ([]Msg, error) {
-	if r, err := t.cfg.Orm.Select("read = ?", false); err != nil {
+	if r, err := t.Orm.Select("read = ?", false); err != nil {
 		return []Msg{}, err
 	} else {
 		return conv2Msg(r)
@@ -44,7 +39,7 @@ func (t *Eip) GetUnread() ([]Msg, error) {
 }
 
 func (t *Eip) GetIndex(idx int) (*Msg, error) {
-	r, err := t.cfg.Orm.Select("uniqueID = ?", idx)
+	r, err := t.Orm.Select("uniqueID = ?", idx)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +51,7 @@ func (t *Eip) GetIndex(idx int) (*Msg, error) {
 }
 
 func (t *Eip) GetAll() ([]Msg, error) {
-	if r, err := t.cfg.Orm.Select(nil); err != nil {
+	if r, err := t.Orm.Select(nil); err != nil {
 		return []Msg{}, err
 	} else {
 		return conv2Msg(r)
@@ -64,7 +59,7 @@ func (t *Eip) GetAll() ([]Msg, error) {
 }
 
 func (t *Eip) MarkRead(idx int) error {
-	return t.cfg.Orm.Update(idx, "Read", true)
+	return t.Orm.Update(idx, "Read", true)
 }
 
 //For testing only

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-24 15:53:38
+ * @LastEditTime: 2020-09-24 18:51:32
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -67,8 +67,8 @@ func TestMSG_GetIndex(t *testing.T) {
 	m.EXPECT().GetIndex(gomock.Any()).DoAndReturn(check_idx)
 	m.EXPECT().GetIndex(gomock.Any()).DoAndReturn(check_idx)
 
-	check_do_id(m, t, 0)
-	check_do_id(m, t, -10)
+	_, _ = check_do_id(m, t, 0)
+	_, _ = check_do_id(m, t, -10)
 
 	// for i := 0; i < 10; i++ {
 	// 	msg := &msg.Eip{}
