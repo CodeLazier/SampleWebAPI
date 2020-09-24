@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-23 14:02:34
+ * @LastEditTime: 2020-09-24 15:03:43
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -12,12 +12,13 @@ import (
 	"context"
 	"errors"
 	"math/rand"
+	"runtime"
 	"strconv"
 	"testing"
 	"time"
 
 	"test/msg"
-	msgmock "test/msg/mocks"
+	msgmock "test/msg/msgmock"
 
 	"github.com/golang/mock/gomock"
 )
@@ -93,7 +94,7 @@ func TestMSG_GetUnreadForAsync(t *testing.T) {
 
 	consumer := func(msgs <-chan *msg.Msg) int {
 		go func() {
-			<-time.After(time.Duration(rand.Intn(8)) * time.Millisecond)
+			<-time.After(time.Duration(rand.Intn(runtime.NumCPU())) * time.Millisecond)
 			cancel()
 		}()
 
@@ -117,7 +118,6 @@ func TestMSG_GetUnreadForAsync(t *testing.T) {
 	} else {
 		t.Log("data is full")
 	}
-
 }
 
 func TestMSG_GetUnread(t *testing.T) {

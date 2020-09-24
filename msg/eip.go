@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:20:05
- * @LastEditTime: 2020-09-23 13:43:41
+ * @LastEditTime: 2020-09-24 15:14:10
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\db\eip.go
@@ -12,92 +12,62 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
-
-	"gorm.io/driver/sqlserver"
-	"gorm.io/gorm"
 )
+
+type EipConfig struct {
+	Orm OrmMsg
+	//
+}
 
 //Eip impl
 type Eip struct {
-	db *gorm.DB
-	sync.RWMutex
+	cfg EipConfig
 }
 
-func getData(db *gorm.DB, query interface{}, args ...interface{}) (msgs []Msg, err error) {
-	var tx *gorm.DB
-	defer func() {
-		var r interface{}
-		if r = recover(); r != nil {
-			err = r.(error)
-			fmt.Println(r)
-		}
-	}()
-	if query != nil {
-		tx = db.Where(query, args).Find(&msgs)
-	} else {
-		tx = db.Find(&msgs)
-	}
-	err = tx.Error
-	if err != nil {
-		return msgs, err
-	} else {
+func NewEip(cfg EipConfig) *Eip {
+	return &Eip{cfg: cfg}
+}
+
+func conv2Msg(i interface{}) ([]Msg, error) {
+	if msgs, ok := i.([]Msg); ok {
 		return msgs, nil
 	}
+	return nil, errors.New("return type is not incorrect")
 }
 
 func (t *Eip) GetUnread() ([]Msg, error) {
-	t.RLock()
-	defer t.RUnlock()
-	return getData(t.db, "read = ?", false)
+	if r, err := t.cfg.Orm.Select("read = ?", false); err != nil {
+		return []Msg{}, err
+	} else {
+		return conv2Msg(r)
+	}
 }
 
 func (t *Eip) GetIndex(idx int) (*Msg, error) {
-	t.RLock()
-	defer t.RUnlock()
-	msgs, err := getData(t.db, nil)
+	r, err := t.cfg.Orm.Select("uniqueID = ?", idx)
 	if err != nil {
 		return nil, err
 	}
-	if len(msgs) > 0 {
-		return &msgs[0], nil
-	} else {
-		return nil, errors.New("idx is not found msg")
+	if msg, ok := r.(*Msg); ok {
+		return msg, nil
 	}
+	return nil, fmt.Errorf("query result multiple count")
+
 }
 
 func (t *Eip) GetAll() ([]Msg, error) {
-	t.RLock()
-	defer t.RUnlock()
-	msgs := make([]Msg, 100)
-	r := t.db.Find(&msgs)
-	if r.Error != nil {
-		return []Msg{}, r.Error
+	if r, err := t.cfg.Orm.Select(nil); err != nil {
+		return []Msg{}, err
 	} else {
-		return msgs, nil
+		return conv2Msg(r)
 	}
 }
 
 func (t *Eip) MarkRead(idx int) error {
-	t.Lock()
-	defer t.Unlock()
-	return t.db.Model(&Msg{}).Where("Id = ?", idx).Update("Read", true).Error
+	return t.cfg.Orm.Update(idx, "Read", true)
 }
 
-func (t *Eip) OpenDB(cfg string) error {
-	dsn := "sqlserver://gorm:LoremIpsum86@localhost:9930?database=gorm"
-	var err error
-	if t.db, err = gorm.Open(sqlserver.Open(dsn), &gorm.Config{}); err != nil {
-		return err
-	} else {
-		db, err := t.db.DB()
-		if err != nil {
-			return err
-		}
-		return db.Ping()
-	}
-}
-
+//For testing only
 func (t *Eip) GetUnreadForAsync(ctx context.Context, maxCount int) <-chan *Msg {
 	data := make(chan *Msg, 30) //buffer channel
 	go func() {

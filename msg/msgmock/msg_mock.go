@@ -62,3 +62,32 @@ func (mr *MockMessagesMockRecorder) GetIndex(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetIndex", reflect.TypeOf((*MockMessages)(nil).GetIndex), id)
 }
+
+// GetAll mocks base method
+func (m *MockMessages) GetAll() ([]msg.Msg, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAll")
+	ret0, _ := ret[0].([]msg.Msg)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAll indicates an expected call of GetAll
+func (mr *MockMessagesMockRecorder) GetAll() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockMessages)(nil).GetAll))
+}
+
+// MarkRead mocks base method
+func (m *MockMessages) MarkRead(idx int) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkRead", idx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkRead indicates an expected call of MarkRead
+func (mr *MockMessagesMockRecorder) MarkRead(idx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRead", reflect.TypeOf((*MockMessages)(nil).MarkRead), idx)
+}

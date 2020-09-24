@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 10:52:47
- * @LastEditTime: 2020-09-23 14:48:14
+ * @LastEditTime: 2020-09-24 15:00:28
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\main.go
@@ -21,6 +21,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func verifyToken() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if parseToken(c.Query("token")) != nil {
+			c.Status(http.StatusForbidden)
+		} else {
+			//do business
+			c.Next()
+		}
+	}
+}
+
 func cors() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		m := c.Request.Method
@@ -39,23 +50,34 @@ func cors() gin.HandlerFunc {
 }
 
 func doGetEipMessages(c *gin.Context) {
-	_ = c.Query("token")
 	eip := &msg.Eip{}
 	if msgs, err := eip.GetUnread(); err == nil {
-		c.JSON(200, msgs)
+		c.JSON(http.StatusOK, msgs)
 	} else {
 		log.Print(err)
 	}
 }
 
+func doEipMessagesMarkRead(c *gin.Context) {
+	eip := &msg.Eip{}
+	if idx, err := strconv.Atoi(c.Query("id")); err != nil {
+		log.Print(err)
+	} else {
+		if err := eip.MarkRead(idx); err == nil {
+			c.JSON(http.StatusOK, gin.H{"error": 0})
+		} else {
+			log.Print(err)
+		}
+	}
+}
+
 func doGetEipMessage(c *gin.Context) {
-	_ = c.Query("token")
 	eip := &msg.Eip{}
 	if idx, err := strconv.Atoi(c.DefaultQuery("id", "0")); err != nil {
 		log.Print(err)
 	} else {
 		if msg, err := eip.GetIndex(idx); err == nil {
-			c.JSON(200, msg)
+			c.JSON(http.StatusOK, msg)
 		} else {
 			log.Print(err)
 		}
@@ -63,19 +85,31 @@ func doGetEipMessage(c *gin.Context) {
 }
 
 func getToken(c *gin.Context) {
-	c.String(200, "not impl")
+	c.String(http.StatusNotImplemented, "not impl")
+
+}
+
+func parseToken(token string) error {
+	return nil
 }
 
 func main() {
 	r := gin.Default()
 	r.Use(cors())
-	r.GET("/GetEipMessages", func(c *gin.Context) {
+	r.Use(verifyToken())
+
+	group := r.Group("/eip")
+
+	group.GET("/getMessages", func(c *gin.Context) {
 		doGetEipMessages(c)
 	})
-	r.GET("/GetEipMessage", func(c *gin.Context) {
+	group.GET("/getMessage", func(c *gin.Context) {
 		doGetEipMessage(c)
 	})
-	r.GET("/GetToken", func(c *gin.Context) {
+	group.POST("/setMessageMarkRead", func(c *gin.Context) {
+		doEipMessagesMarkRead(c)
+	})
+	r.GET("/getToken", func(c *gin.Context) {
 		getToken(c)
 	})
 
