@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 10:52:47
- * @LastEditTime: 2020-09-24 15:00:28
+ * @LastEditTime: 2020-09-24 18:29:55
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\main.go
@@ -93,6 +93,16 @@ func parseToken(token string) error {
 	return nil
 }
 
+func shutdown(server *http.Server) {
+	//It takes time to close, we give him time
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal("Server Shutdown:", err)
+	}
+}
+
 func main() {
 	r := gin.Default()
 	r.Use(cors())
@@ -113,6 +123,7 @@ func main() {
 		getToken(c)
 	})
 
+	//do config
 	server := &http.Server{
 		Addr:         ":9090",
 		Handler:      r,
@@ -121,24 +132,17 @@ func main() {
 	}
 
 	go func() {
-		//do config
 		if err := server.ListenAndServe(); err != nil {
 			log.Fatal(err)
 		}
 	}()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
-	<-quit
+	<-func() <-chan os.Signal {
+		q := make(chan os.Signal, 1)
+		signal.Notify(q, os.Interrupt)
+		return q
+	}()
 
-	log.Println("Shutdown Server ...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatal("Server Shutdown:", err)
-	}
-
-	<-ctx.Done()
+	shutdown(server)
 
 }

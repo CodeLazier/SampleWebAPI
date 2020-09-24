@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-24 15:49:48
+ * @LastEditTime: 2020-09-24 18:48:03
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -11,6 +11,7 @@ package tests
 import (
 	"test/msg"
 	"test/msg/orm"
+	"time"
 
 	"testing"
 )
@@ -24,11 +25,24 @@ func TestMockOrm(t *testing.T) {
 		t.Log(msgs)
 	}
 
-	if msg, err := eip.GetIndex(0); err != nil {
-		t.Fail()
-		t.Log(err)
-	} else {
-		t.Log(msg)
+	ticker := time.NewTicker(100 * time.Millisecond)
+	count := 0
+	defer ticker.Stop()
+	getIndex := func() {
+		if msg, err := eip.GetIndex(0); err != nil {
+			t.Fail()
+			t.Log(err)
+		} else {
+			t.Log(msg)
+		}
+	}
+	for {
+		<-ticker.C
+		getIndex()
+		count++
+		if count > 5 {
+			break
+		}
 	}
 
 	if err := eip.MarkRead(3); err != nil {
