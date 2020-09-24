@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 10:52:47
- * @LastEditTime: 2020-09-24 18:29:55
+ * @LastEditTime: 2020-09-24 22:09:13
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\main.go
@@ -16,6 +16,7 @@ import (
 	"os/signal"
 	"strconv"
 	"test/msg"
+	"test/msg/orm"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -24,7 +25,7 @@ import (
 func verifyToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if parseToken(c.Query("token")) != nil {
-			c.Status(http.StatusForbidden)
+			c.String(http.StatusUnauthorized, "Unauthorized call")
 		} else {
 			//do business
 			c.Next()
@@ -49,44 +50,55 @@ func cors() gin.HandlerFunc {
 	}
 }
 
-func doGetEipMessages(c *gin.Context) {
-	eip := &msg.Eip{}
-	if msgs, err := eip.GetUnread(); err == nil {
-		c.JSON(http.StatusOK, msgs)
-	} else {
-		log.Print(err)
-	}
-}
-
-func doEipMessagesMarkRead(c *gin.Context) {
-	eip := &msg.Eip{}
-	if idx, err := strconv.Atoi(c.Query("id")); err != nil {
-		log.Print(err)
-	} else {
-		if err := eip.MarkRead(idx); err == nil {
-			c.JSON(http.StatusOK, gin.H{"error": 0})
+func doGetEipMessages() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		eip := &msg.Eip{}
+		if msgs, err := eip.GetUnread(); err == nil {
+			c.JSON(http.StatusOK, msgs)
 		} else {
 			log.Print(err)
 		}
 	}
 }
 
-func doGetEipMessage(c *gin.Context) {
-	eip := &msg.Eip{}
-	if idx, err := strconv.Atoi(c.DefaultQuery("id", "0")); err != nil {
-		log.Print(err)
-	} else {
-		if msg, err := eip.GetIndex(idx); err == nil {
-			c.JSON(http.StatusOK, msg)
-		} else {
+func doEipMessagesMarkRead() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		eip := &msg.Eip{
+			Orm: &orm.OrmMock{},
+		}
+		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
 			log.Print(err)
+		} else {
+			if err := eip.MarkRead(idx); err == nil {
+				c.JSON(http.StatusOK, gin.H{"error": 0})
+			} else {
+				log.Print(err)
+			}
 		}
 	}
 }
 
-func getToken(c *gin.Context) {
-	c.String(http.StatusNotImplemented, "not impl")
+func doGetEipMessage() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		eip := &msg.Eip{
+			Orm: orm.NewOrmMock(),
+		}
+		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
+			log.Print(err)
+		} else {
+			if msg, err := eip.GetIndex(idx); err == nil {
+				c.JSON(http.StatusOK, msg)
+			} else {
+				log.Print(err)
+			}
+		}
+	}
+}
 
+func getToken() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.String(http.StatusNotImplemented, "not impl")
+	}
 }
 
 func parseToken(token string) error {
@@ -104,29 +116,22 @@ func shutdown(server *http.Server) {
 }
 
 func main() {
-	r := gin.Default()
-	r.Use(cors())
-	r.Use(verifyToken())
+	g := gin.Default()
+	g.Use(cors())
+	eip := g.Group("/eip")
 
-	group := r.Group("/eip")
+	v1 := eip.Group("/v1")
+	v1.Use(verifyToken())
 
-	group.GET("/getMessages", func(c *gin.Context) {
-		doGetEipMessages(c)
-	})
-	group.GET("/getMessage", func(c *gin.Context) {
-		doGetEipMessage(c)
-	})
-	group.POST("/setMessageMarkRead", func(c *gin.Context) {
-		doEipMessagesMarkRead(c)
-	})
-	r.GET("/getToken", func(c *gin.Context) {
-		getToken(c)
-	})
+	v1.GET("/getMessages", doGetEipMessages())
+	v1.GET("/getMessage/:id", doGetEipMessage())
+	v1.POST("/setMessageMarkRead/:id", doEipMessagesMarkRead())
+	v1.GET("/getToken", getToken())
 
 	//do config
 	server := &http.Server{
 		Addr:         ":9090",
-		Handler:      r,
+		Handler:      g,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
