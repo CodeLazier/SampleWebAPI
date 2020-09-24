@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-24 14:20:01
- * @LastEditTime: 2020-09-24 15:04:29
+ * @LastEditTime: 2020-09-24 15:35:42
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\msg\mock\ormmock.go
@@ -41,8 +41,8 @@ func (t *OrmDB) OpenOrm(cfg ...string) error {
 
 func (t *OrmDB) Select(query interface{}, args ...interface{}) (result interface{}, err error) {
 	if t.db != nil {
-		defer t.RUnlock()
 		t.RLock()
+		defer t.RUnlock()
 		var tx *gorm.DB
 		defer func() {
 			var r interface{}
@@ -70,8 +70,8 @@ func (t *OrmDB) Select(query interface{}, args ...interface{}) (result interface
 
 func (t *OrmDB) Update(idx int, field string, value interface{}) (err error) {
 	if t.db != nil {
-		defer t.Unlock()
 		t.Lock()
+		defer t.Unlock()
 		defer func() {
 			var r interface{}
 			if r = recover(); r != nil {
