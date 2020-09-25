@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-25 12:02:36
- * @LastEditTime: 2020-09-25 14:19:41
+ * @LastEditTime: 2020-09-25 14:57:07
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\cache\simplecache.go
@@ -83,7 +83,7 @@ func checkExpire() {
 		sc.sm.Range(func(key, value interface{}) bool {
 			v := value.(CacheItem)
 			if v.Expire > 0 {
-				if now.Sub(v.createTime) >= v.Expire {
+				if now.Sub(v.createTime) > v.Expire {
 					sc.sm.Delete(key)
 				}
 			}

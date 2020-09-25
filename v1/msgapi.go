@@ -1,10 +1,11 @@
 /*
  * @Author: your name
  * @Date: 2020-09-25 09:08:54
- * @LastEditTime: 2020-09-25 14:46:28
+ * @LastEditTime: 2020-09-25 15:02:09
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\v1\msgapi.go
+ * 概念性的代码,缺少严谨和必要的重构,由于还没有实现鉴权所以缺少必要的如user等字段来获取资料
  */
 package v1
 
