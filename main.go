@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 10:52:47
- * @LastEditTime: 2020-09-24 22:09:13
+ * @LastEditTime: 2020-09-25 09:13:25
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\main.go
@@ -14,24 +14,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
-	"test/msg"
-	"test/msg/orm"
+	v "test/v1"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
-
-func verifyToken() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		if parseToken(c.Query("token")) != nil {
-			c.String(http.StatusUnauthorized, "Unauthorized call")
-		} else {
-			//do business
-			c.Next()
-		}
-	}
-}
 
 func cors() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -50,83 +37,18 @@ func cors() gin.HandlerFunc {
 	}
 }
 
-func doGetEipMessages() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		eip := &msg.Eip{}
-		if msgs, err := eip.GetUnread(); err == nil {
-			c.JSON(http.StatusOK, msgs)
-		} else {
-			log.Print(err)
-		}
-	}
-}
-
-func doEipMessagesMarkRead() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		eip := &msg.Eip{
-			Orm: &orm.OrmMock{},
-		}
-		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
-			log.Print(err)
-		} else {
-			if err := eip.MarkRead(idx); err == nil {
-				c.JSON(http.StatusOK, gin.H{"error": 0})
-			} else {
-				log.Print(err)
-			}
-		}
-	}
-}
-
-func doGetEipMessage() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		eip := &msg.Eip{
-			Orm: orm.NewOrmMock(),
-		}
-		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
-			log.Print(err)
-		} else {
-			if msg, err := eip.GetIndex(idx); err == nil {
-				c.JSON(http.StatusOK, msg)
-			} else {
-				log.Print(err)
-			}
-		}
-	}
-}
-
-func getToken() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.String(http.StatusNotImplemented, "not impl")
-	}
-}
-
-func parseToken(token string) error {
-	return nil
-}
-
-func shutdown(server *http.Server) {
-	//It takes time to close, we give him time
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	if err := server.Shutdown(ctx); err != nil {
-		log.Fatal("Server Shutdown:", err)
-	}
-}
-
 func main() {
 	g := gin.Default()
 	g.Use(cors())
 	eip := g.Group("/eip")
 
 	v1 := eip.Group("/v1")
-	v1.Use(verifyToken())
+	v1.Use(v.VerifyToken())
 
-	v1.GET("/getMessages", doGetEipMessages())
-	v1.GET("/getMessage/:id", doGetEipMessage())
-	v1.POST("/setMessageMarkRead/:id", doEipMessagesMarkRead())
-	v1.GET("/getToken", getToken())
+	v1.GET("/getMessages", v.DoGetMessages())
+	v1.GET("/getMessage/:id", v.DoGetMessage())
+	v1.POST("/setMessageMarkRead/:id", v.DoMessagesMarkRead())
+	v1.GET("/getToken", v.GetToken())
 
 	//do config
 	server := &http.Server{
@@ -148,6 +70,14 @@ func main() {
 		return q
 	}()
 
-	shutdown(server)
+	func() {
+		//It takes time to close, we give him time
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		if err := server.Shutdown(ctx); err != nil {
+			log.Fatal("Server Shutdown:", err)
+		}
+	}()
 
 }

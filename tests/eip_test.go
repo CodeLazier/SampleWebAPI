@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-24 21:13:38
+ * @LastEditTime: 2020-09-25 09:08:13
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -18,7 +18,7 @@ import (
 
 func TestMockOrm(t *testing.T) {
 	eip := &msg.Eip{
-		Orm: orm.NewOrmMock(),
+		Control: orm.NewOrmMock(),
 	}
 	if msgs, err := eip.GetAll(); err != nil {
 		t.Fail()
@@ -62,7 +62,7 @@ func TestDBOrm(t *testing.T) {
 		t.Fatal(err)
 	}
 	eip := &msg.Eip{
-		Orm: ormDB,
+		Control: ormDB,
 	}
 	if msgs, err := eip.GetAll(); err != nil {
 		t.Log(err)

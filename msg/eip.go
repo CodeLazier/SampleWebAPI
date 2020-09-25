@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:20:05
- * @LastEditTime: 2020-09-24 21:14:04
+ * @LastEditTime: 2020-09-25 09:06:56
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\db\eip.go
@@ -16,11 +16,7 @@ import (
 
 //Eip impl
 type Eip struct {
-	Orm OrmMsg
-}
-
-func New() *Eip {
-	return &Eip{}
+	Control
 }
 
 func conv2Msg(i interface{}) ([]Msg, error) {
@@ -31,7 +27,7 @@ func conv2Msg(i interface{}) ([]Msg, error) {
 }
 
 func (t *Eip) GetUnread() ([]Msg, error) {
-	if r, err := t.Orm.Select("read = ?", false); err != nil {
+	if r, err := t.Select("read = ?", false); err != nil {
 		return []Msg{}, err
 	} else {
 		return conv2Msg(r)
@@ -39,7 +35,7 @@ func (t *Eip) GetUnread() ([]Msg, error) {
 }
 
 func (t *Eip) GetIndex(idx int) (*Msg, error) {
-	r, err := t.Orm.Select("uniqueID = ?", idx)
+	r, err := t.Select("uniqueID = ?", idx)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +47,7 @@ func (t *Eip) GetIndex(idx int) (*Msg, error) {
 }
 
 func (t *Eip) GetAll() ([]Msg, error) {
-	if r, err := t.Orm.Select(nil); err != nil {
+	if r, err := t.Select(nil); err != nil {
 		return []Msg{}, err
 	} else {
 		return conv2Msg(r)
@@ -59,7 +55,7 @@ func (t *Eip) GetAll() ([]Msg, error) {
 }
 
 func (t *Eip) MarkRead(idx int) error {
-	return t.Orm.Update(idx, "Read", true)
+	return t.Update(idx, "Read", true)
 }
 
 //For testing only
