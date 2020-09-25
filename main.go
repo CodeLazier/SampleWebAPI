@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 10:52:47
- * @LastEditTime: 2020-09-25 09:13:25
+ * @LastEditTime: 2020-09-25 09:19:03
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\main.go
@@ -14,7 +14,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	v "test/v1"
+	v "test/v1" //replace vx will if upgrade in the future
 	"time"
 
 	"github.com/gin-gonic/gin"

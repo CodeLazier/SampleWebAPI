@@ -1,4 +1,3 @@
 *.exe
 *.sum
-go.mod
 .vscode
