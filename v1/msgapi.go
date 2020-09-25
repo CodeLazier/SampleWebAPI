@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-25 09:08:54
- * @LastEditTime: 2020-09-25 09:46:14
+ * @LastEditTime: 2020-09-25 14:46:28
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\v1\msgapi.go
@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"test/cache"
 	"test/msg"
 	"test/msg/orm"
 	"time"
@@ -63,14 +64,25 @@ func VerifyToken() gin.HandlerFunc {
 
 func DoGetMessages() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		//use db pool,every db connection is a slow operation
 		eip := &msg.Eip{
 			Control: orm.NewOrmMock(),
 		}
-		if msgs, err := eip.GetAll(); err == nil {
-			c.JSON(http.StatusOK, NewResponseData(msgs, err))
+		//we take it of the cache
+		cc := cache.GetInstance()
+		if v, err := cc.Get("username"); err != cache.ErrCacheNotFound {
+			c.JSON(http.StatusOK, NewResponseData(v, err))
+			log.Println("cached...")
 		} else {
-			log.Print(err)
-			c.JSON(http.StatusOK, NewResponseData(nil, err))
+			//Cache penetration
+			if msgs, err := eip.GetAll(); err == nil {
+				c.JSON(http.StatusOK, NewResponseData(msgs, err))
+				_ = cc.Add("username", cache.CacheItem{Data: msgs, Expire: 3 * time.Second})
+				log.Println("cache penetration")
+			} else {
+				log.Print(err)
+				c.JSON(http.StatusOK, NewResponseData(nil, err))
+			}
 		}
 	}
 }
