@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 10:52:47
- * @LastEditTime: 2020-09-26 20:59:47
+ * @LastEditTime: 2020-09-27 15:36:28
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\main.go
@@ -24,7 +24,7 @@ import (
 
 func main() {
 	g := gin.Default()
-	g.Use(cors.Default())
+	g.Use(cors.Default()) //Allow *
 	eip := g.Group("/eip")
 
 	v1 := eip.Group("/v1")

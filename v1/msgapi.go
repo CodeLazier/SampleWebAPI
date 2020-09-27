@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-25 09:08:54
- * @LastEditTime: 2020-09-27 11:16:26
+ * @LastEditTime: 2020-09-27 15:46:14
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\v1\msgapi.go
@@ -56,6 +56,7 @@ func VerifyToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if parseToken(c.Query("token")) != nil {
 			c.JSON(http.StatusUnauthorized, NewResponseData(nil, fmt.Errorf("Unauthorized call")))
+			c.Abort()
 		} else {
 			//do business
 			c.Next()

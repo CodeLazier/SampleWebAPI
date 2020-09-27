@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-27 11:49:39
+ * @LastEditTime: 2020-09-27 15:57:59
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -53,6 +53,11 @@ func (s *Snowflake) GetId() (int64, error) {
 		s.lastTimestamp = curTimestamp
 	}
 	return int64((0x1ffffffffff&s.lastTimestamp)<<22) + int64(0xff<<10) + int64(0xfff&s.index), nil
+}
+
+func Test_InterfaceCompatible(t *testing.T) {
+	var _ msg.Control = &orm.OrmDB{}
+	_ = &orm.OrmMock{}
 }
 
 func Benchmark_Add_Get(b *testing.B) {
