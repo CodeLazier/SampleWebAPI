@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-25 09:08:54
- * @LastEditTime: 2020-09-25 15:02:09
+ * @LastEditTime: 2020-09-27 11:16:26
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\v1\msgapi.go
@@ -66,7 +66,7 @@ func VerifyToken() gin.HandlerFunc {
 func DoGetMessages() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		//use db pool,every db connection is a slow operation
-		eip := &msg.Eip{
+		eip := &msg.EipMsg{
 			Control: orm.NewOrmMock(),
 		}
 		//we take it of the cache
@@ -78,7 +78,7 @@ func DoGetMessages() gin.HandlerFunc {
 			//Cache penetration
 			if msgs, err := eip.GetAll(); err == nil {
 				c.JSON(http.StatusOK, NewResponseData(msgs, err))
-				_ = cc.Add("username", cache.CacheItem{Data: msgs, Expire: 3 * time.Second})
+				_ = cc.Add("username", cache.NewCacheItem(msgs, 3*time.Second))
 				log.Println("cache penetration")
 			} else {
 				log.Print(err)
@@ -90,7 +90,7 @@ func DoGetMessages() gin.HandlerFunc {
 
 func DoMessagesMarkRead() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eip := &msg.Eip{
+		eip := &msg.EipMsg{
 			Control: &orm.OrmMock{},
 		}
 		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
@@ -107,7 +107,7 @@ func DoMessagesMarkRead() gin.HandlerFunc {
 
 func DoGetMessage() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eip := &msg.Eip{
+		eip := &msg.EipMsg{
 			Control: orm.NewOrmMock(),
 		}
 		if idx, err := strconv.Atoi(c.Param("id")); err != nil {

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 10:52:47
- * @LastEditTime: 2020-09-25 09:19:03
+ * @LastEditTime: 2020-09-26 20:59:47
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\main.go
@@ -17,29 +17,14 @@ import (
 	v "test/v1" //replace vx will if upgrade in the future
 	"time"
 
+	"github.com/gin-contrib/cors"
+
 	"github.com/gin-gonic/gin"
 )
 
-func cors() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		m := c.Request.Method
-		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token, Authorization, Token")
-		c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-		c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
-		c.Header("Access-Control-Allow-Credentials", "true")
-
-		if m == "OPTIONS" {
-			c.AbortWithStatus(http.StatusNoContent)
-		}
-
-		c.Next()
-	}
-}
-
 func main() {
 	g := gin.Default()
-	g.Use(cors())
+	g.Use(cors.Default())
 	eip := g.Group("/eip")
 
 	v1 := eip.Group("/v1")

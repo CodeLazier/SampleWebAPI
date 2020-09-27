@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-24 18:51:32
+ * @LastEditTime: 2020-09-25 21:34:24
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -87,7 +87,7 @@ func TestMSG_GetUnreadForAsync(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel() //chan is close then go func exit
 
-	production := func(m *msg.Eip, c int) <-chan *msg.Msg {
+	production := func(m *msg.EipMsg, c int) <-chan *msg.Msg {
 		return m.GetUnreadForAsync(ctx, c)
 	}
 
@@ -112,7 +112,7 @@ func TestMSG_GetUnreadForAsync(t *testing.T) {
 
 	//if max count is 1000
 	var maxCount int = 1000
-	if consumer(production(&msg.Eip{}, maxCount)) < maxCount-1 {
+	if consumer(production(&msg.EipMsg{}, maxCount)) < maxCount-1 {
 		t.Log("data is cancel")
 	} else {
 		t.Log("data is full")

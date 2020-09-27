@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-25 12:02:36
- * @LastEditTime: 2020-09-25 14:57:07
+ * @LastEditTime: 2020-09-27 11:37:08
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\cache\simplecache.go
@@ -18,6 +18,7 @@ type CacheCtl interface {
 	Add(key interface{}, item CacheItem) error
 	Get(key interface{}) (CacheItem, error)
 	Update(key interface{}, item CacheItem)
+	Clear()
 }
 
 var ErrCacheNotFound error = fmt.Errorf("cache item is not found")
@@ -26,14 +27,31 @@ var ErrCacheExist error = fmt.Errorf("cache item is exist")
 type CacheItem struct {
 	Data interface{}
 
-	Expire time.Duration //0 is infinity,Not less than 1 second
+	expire time.Duration //0 is infinity,Not less than 1 second
 
 	createTime time.Time
 }
 
+func NewCacheItem(data interface{}, expire time.Duration) CacheItem {
+	r := CacheItem{Data: data}
+	return r.Expire(expire)
+}
+
 type simpleCache struct {
-	m  sync.RWMutex
-	sm sync.Map
+	m           sync.RWMutex
+	sm          sync.Map
+	TimeoutFunc func(CacheItem)
+}
+
+func (t CacheItem) Expire(d time.Duration) CacheItem {
+	if d > 0 {
+		v := d
+		if v < time.Second {
+			v = time.Second
+		}
+		t.expire = v
+	}
+	return t
 }
 
 func (t *simpleCache) Add(key interface{}, item CacheItem) error {
@@ -64,6 +82,10 @@ func (t *simpleCache) Update(key interface{}, item CacheItem) {
 	}
 }
 
+func (t *simpleCache) Clear() {
+	t.sm = sync.Map{}
+}
+
 var sc *simpleCache
 
 func GetInstance() *simpleCache {
@@ -72,19 +94,22 @@ func GetInstance() *simpleCache {
 
 func init() {
 	sc = &simpleCache{}
-	go checkExpire()
+	go checkExpire(sc)
 }
 
-func checkExpire() {
+func checkExpire(c *simpleCache) {
 	ticker := time.NewTicker(1 * time.Second)
 	for {
 		<-ticker.C
 		now := time.Now().Local()
-		sc.sm.Range(func(key, value interface{}) bool {
+		c.sm.Range(func(key, value interface{}) bool {
 			v := value.(CacheItem)
-			if v.Expire > 0 {
-				if now.Sub(v.createTime) > v.Expire {
-					sc.sm.Delete(key)
+			if v.expire > 0 {
+				if now.Sub(v.createTime) > v.expire {
+					if c.TimeoutFunc != nil {
+						c.TimeoutFunc(v)
+					}
+					c.sm.Delete(key)
 				}
 			}
 			return true

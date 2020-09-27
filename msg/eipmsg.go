@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:20:05
- * @LastEditTime: 2020-09-25 09:06:56
+ * @LastEditTime: 2020-09-25 21:33:21
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\db\eip.go
@@ -15,7 +15,7 @@ import (
 )
 
 //Eip impl
-type Eip struct {
+type EipMsg struct {
 	Control
 }
 
@@ -26,7 +26,7 @@ func conv2Msg(i interface{}) ([]Msg, error) {
 	return nil, errors.New("return type is not incorrect")
 }
 
-func (t *Eip) GetUnread() ([]Msg, error) {
+func (t *EipMsg) GetUnread() ([]Msg, error) {
 	if r, err := t.Select("read = ?", false); err != nil {
 		return []Msg{}, err
 	} else {
@@ -34,7 +34,7 @@ func (t *Eip) GetUnread() ([]Msg, error) {
 	}
 }
 
-func (t *Eip) GetIndex(idx int) (*Msg, error) {
+func (t *EipMsg) GetIndex(idx int) (*Msg, error) {
 	r, err := t.Select("uniqueID = ?", idx)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (t *Eip) GetIndex(idx int) (*Msg, error) {
 
 }
 
-func (t *Eip) GetAll() ([]Msg, error) {
+func (t *EipMsg) GetAll() ([]Msg, error) {
 	if r, err := t.Select(nil); err != nil {
 		return []Msg{}, err
 	} else {
@@ -54,12 +54,12 @@ func (t *Eip) GetAll() ([]Msg, error) {
 	}
 }
 
-func (t *Eip) MarkRead(idx int) error {
+func (t *EipMsg) MarkRead(idx int) error {
 	return t.Update(idx, "Read", true)
 }
 
 //For testing only
-func (t *Eip) GetUnreadForAsync(ctx context.Context, maxCount int) <-chan *Msg {
+func (t *EipMsg) GetUnreadForAsync(ctx context.Context, maxCount int) <-chan *Msg {
 	data := make(chan *Msg, 30) //buffer channel
 	go func() {
 		defer close(data)
