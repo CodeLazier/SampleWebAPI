@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-27 15:57:59
+ * @LastEditTime: 2020-09-28 16:01:59
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -182,7 +182,7 @@ func TestMockOrm(t *testing.T) {
 	eip := &msg.EipMsg{
 		Control: orm.NewOrmMock(),
 	}
-	if msgs, err := eip.GetAll(); err != nil {
+	if msgs, err := eip.GetAll(msg.CustomWhere{}, 0, -1); err != nil {
 		t.Fail()
 		t.Log(err)
 	} else {
@@ -218,7 +218,7 @@ func TestMockOrm(t *testing.T) {
 //need actual environment
 func TestDBOrm(t *testing.T) {
 	ormDB, err := orm.NewOrmDB(orm.OrmDBConfig{
-		DBConn: "sqlserver://xx@xxx:9930?database=eip",
+		DBConn: "sqlserver://sa:sasa@localhost?database=WebEIP5",
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -226,22 +226,22 @@ func TestDBOrm(t *testing.T) {
 	eip := &msg.EipMsg{
 		Control: ormDB,
 	}
-	if msgs, err := eip.GetAll(); err != nil {
+	if msgs, err := eip.GetAll(msg.CustomWhere{}, 0, -1); err != nil {
 		t.Log(err)
 		t.Fail()
 	} else {
 		t.Log(msgs)
 	}
 
-	if msg, err := eip.GetIndex(0); err != nil {
-		t.Log(err)
-		t.Fail()
-	} else {
-		t.Log(msg)
-	}
+	// if msg, err := eip.GetIndex(0); err != nil {
+	// 	t.Log(err)
+	// 	t.Fail()
+	// } else {
+	// 	t.Log(msg)
+	// }
 
-	if err := eip.MarkRead(3); err != nil {
-		t.Log(err)
-		t.Fail()
-	}
+	// if err := eip.MarkRead(3); err != nil {
+	// 	t.Log(err)
+	// 	t.Fail()
+	// }
 }

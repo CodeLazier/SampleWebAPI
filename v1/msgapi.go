@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-25 09:08:54
- * @LastEditTime: 2020-09-27 15:46:14
+ * @LastEditTime: 2020-09-28 15:30:43
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\v1\msgapi.go
@@ -77,7 +77,7 @@ func DoGetMessages() gin.HandlerFunc {
 			log.Println("cached...")
 		} else {
 			//Cache penetration
-			if msgs, err := eip.GetAll(); err == nil {
+			if msgs, err := eip.GetAll(msg.CustomWhere{}, 0, -1); err == nil {
 				c.JSON(http.StatusOK, NewResponseData(msgs, err))
 				_ = cc.Add("username", cache.NewCacheItem(msgs, 3*time.Second))
 				log.Println("cache penetration")

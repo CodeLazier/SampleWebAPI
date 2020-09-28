@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-25 21:34:24
+ * @LastEditTime: 2020-09-28 14:14:09
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -27,14 +27,14 @@ func check_idx(idx int) (*msg.Msg, error) {
 	if idx < 0 {
 		return nil, errors.New("id not found")
 	}
-	return &msg.Msg{Id: idx, Title: "test title"}, nil
+	return &msg.Msg{UniqueID: idx, Subject: "test title"}, nil
 
 }
 
 func check_unread() ([]msg.Msg, error) {
 	r := make([]msg.Msg, 0)
 	for i := 0; i < 3; i++ {
-		r = append(r, msg.Msg{Id: i, Title: "test title" + strconv.Itoa(i)})
+		r = append(r, msg.Msg{UniqueID: i, Subject: "test title" + strconv.Itoa(i)})
 	}
 
 	return r, nil
@@ -101,7 +101,7 @@ func TestMSG_GetUnreadForAsync(t *testing.T) {
 			for data := range msgs {
 				if data != nil {
 					*count++
-					t.Log(data.Id, data.Title)
+					t.Log(data.UniqueID, data.Subject)
 				} else {
 					t.Error("read data is error")
 				}

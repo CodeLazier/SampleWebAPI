@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-24 14:20:01
- * @LastEditTime: 2020-09-24 15:41:17
+ * @LastEditTime: 2020-09-28 14:13:36
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\msg\mock\ormmock.go
@@ -35,12 +35,12 @@ func (t *OrmMock) Select(q interface{}, a ...interface{}) (r interface{}, err er
 		//mock some data
 		r := make([]msg.Msg, 0)
 		for i := 0; i < 10; i++ {
-			r = append(r, msg.Msg{Id: i, Title: fmt.Sprintf("test_%d", i)})
+			r = append(r, msg.Msg{UniqueID: i, Subject: fmt.Sprintf("test_%d", i)})
 		}
 		return r, nil
 	} else {
 		//mock one data
-		return &msg.Msg{Id: 0, Title: "test0"}, nil
+		return &msg.Msg{UniqueID: 0, Subject: "test0"}, nil
 	}
 }
 
