@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-28 16:01:59
+ * @LastEditTime: 2020-09-28 22:19:54
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -9,14 +9,17 @@
 package tests
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"math/rand"
+	"runtime"
 	"sync"
 	"test/cache"
+	"test/handler"
 	"test/msg"
-	"test/msg/orm"
+
 	"testing"
 	"time"
 	"unsafe"
@@ -56,8 +59,8 @@ func (s *Snowflake) GetId() (int64, error) {
 }
 
 func Test_InterfaceCompatible(t *testing.T) {
-	var _ msg.Control = &orm.OrmDB{}
-	_ = &orm.OrmMock{}
+	// var _ handler.Control = &handler.Eip{}
+	// _ = &handler.CtlMock{}
 }
 
 func Benchmark_Add_Get(b *testing.B) {
@@ -179,10 +182,10 @@ func TestCache(t *testing.T) {
 }
 
 func TestMockOrm(t *testing.T) {
-	eip := &msg.EipMsg{
-		Control: orm.NewOrmMock(),
+	eip := &msg.EipMsgHandler{
+		Control: handler.NewCtlMock(),
 	}
-	if msgs, err := eip.GetAll(msg.CustomWhere{}, 0, -1); err != nil {
+	if msgs, err := eip.GetAll(0, -1); err != nil {
 		t.Fail()
 		t.Log(err)
 	} else {
@@ -216,17 +219,17 @@ func TestMockOrm(t *testing.T) {
 }
 
 //need actual environment
-func TestDBOrm(t *testing.T) {
-	ormDB, err := orm.NewOrmDB(orm.OrmDBConfig{
+func TestDBHandler(t *testing.T) {
+	eipDB, err := handler.NewMsgDB(handler.MsgDBConfig{
 		DBConn: "sqlserver://sa:sasa@localhost?database=WebEIP5",
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	eip := &msg.EipMsg{
-		Control: ormDB,
+	eip := &msg.EipMsgHandler{
+		Control: eipDB,
 	}
-	if msgs, err := eip.GetAll(msg.CustomWhere{}, 0, -1); err != nil {
+	if msgs, err := eip.GetAll(0, -1); err != nil {
 		t.Log(err)
 		t.Fail()
 	} else {
@@ -244,4 +247,41 @@ func TestDBOrm(t *testing.T) {
 	// 	t.Log(err)
 	// 	t.Fail()
 	// }
+}
+
+func TestMSG_GetUnreadForAsync(t *testing.T) {
+	rand.Seed(time.Now().Unix())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel() //chan is close then go func exit
+
+	production := func(m *msg.EipMsgHandler, c int) <-chan *handler.EipMsg {
+		return m.GetUnreadForAsync(ctx, c)
+	}
+
+	consumer := func(msgs <-chan *handler.EipMsg) int {
+		go func() {
+			<-time.After(time.Duration(rand.Intn(runtime.NumCPU())) * time.Millisecond)
+			cancel()
+		}()
+
+		return *func(count *int) *int {
+			for data := range msgs {
+				if data != nil {
+					*count++
+					t.Log(data.UniqueID, data.Subject)
+				} else {
+					t.Error("read data is error")
+				}
+			}
+			return count
+		}(new(int))
+	}
+
+	//if max count is 1000
+	var maxCount int = 1000
+	if consumer(production(&msg.EipMsgHandler{}, maxCount)) < maxCount-1 {
+		t.Log("data is cancel")
+	} else {
+		t.Log("data is full")
+	}
 }

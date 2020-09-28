@@ -1,16 +1,26 @@
 /*
  * @Author: your name
- * @Date: 2020-09-22 11:18:00
- * @LastEditTime: 2020-09-28 15:29:12
+ * @Date: 2020-09-24 10:35:54
+ * @LastEditTime: 2020-09-28 22:16:15
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
- * @FilePath: \test\db\db.go
+ * @FilePath: \pre_work\msg\orm.go
  */
-package msg
+package handler
 
 import "time"
 
-type Msg struct {
+type Cmd struct {
+	Model interface{} // query struct or model
+	Start int
+	Count int
+	Order string
+	//add others if business needs
+	Query interface{}
+	Args  []interface{}
+}
+
+type EipMsg struct {
 	//gorm.Model        // orm map
 	UniqueID        int       `json:"id" gorm:"column:UniqueID"`
 	GroupID         string    `json:"groupid" gorm:"column:GroupID"`
@@ -43,23 +53,22 @@ type Msg struct {
 	//...
 }
 
-type CustomWhere struct {
-	Query interface{}
-	Args  []interface{}
+func (m EipMsg) TableName() string {
+	return "EIP_MessageMaster"
 }
 
-type Messages interface {
-	//get msgs for read,sort by senddate
-	GetUnread(where CustomWhere, start int, count int) ([]Msg, error)
-	//get msg for uniqueid
-	GetIndex(id int) (*Msg, error)
-	//get all msgs,sort by senddate
-	GetAll(where CustomWhere, start int, count int) ([]Msg, error)
-	//set read
-	MarkRead(idx int) error
+var DefaultCmd Cmd
 
-	GetUnradCount(where CustomWhere) (int, error)
-	GetCount(where CustomWhere) (int, error)
+func init() {
+	msgs := &[]EipMsg{}
+	DefaultCmd = Cmd{
+		Model: msgs,
+		Count: -1,
+	}
+}
 
-	//...
+type Control interface {
+	OpenOrm(...string) error
+	Query(cmd Cmd) (interface{}, error)
+	Update(cmd Cmd) error
 }

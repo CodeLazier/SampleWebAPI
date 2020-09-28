@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:20:05
- * @LastEditTime: 2020-09-28 15:47:54
+ * @LastEditTime: 2020-09-28 22:18:09
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\db\eip.go
@@ -12,79 +12,96 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
+	"test/handler"
+	. "test/handler"
 )
 
+type Messages interface {
+	//get msgs for read,sort by senddate
+	GetUnread(start int, count int) ([]EipMsg, error)
+	//get msg for uniqueid
+	GetIndex(id int) (*EipMsg, error)
+	//get all msgs,sort by senddate
+	GetAll(start int, count int) ([]EipMsg, error)
+	//set read
+	MarkRead(idx int) error
+
+	GetUnradCount() (int, error)
+	GetCount() (int, error)
+
+	//...
+}
+
 //Eip impl
-type EipMsg struct {
-	Control
+type EipMsgHandler struct {
+	handler.Control
 }
 
-func (m Msg) TableName() string {
-	return "EIP_MessageMaster"
-}
-
-func conv2Msg(i interface{}) ([]Msg, error) {
-	if msgs, ok := i.([]Msg); ok {
+func conv2Msg(i interface{}) ([]EipMsg, error) {
+	switch msgs := i.(type) {
+	case []EipMsg:
 		return msgs, nil
+	case *[]EipMsg:
+		return *msgs, nil
+
+	default:
+		return nil, errors.New("return type is not incorrect")
 	}
-	return nil, errors.New("return type is not incorrect")
 }
 
-func (t *EipMsg) GetUnread(where CustomWhere, start int, count int) ([]Msg, error) {
-	if r, err := t.Select("read = ?", false); err != nil {
-		return []Msg{}, err
+func (t *EipMsgHandler) GetUnread(start int, count int) ([]EipMsg, error) {
+	if r, err := t.Query(handler.DefaultCmd); err != nil {
+		return []EipMsg{}, err
 	} else {
 		return conv2Msg(r)
 	}
 }
 
-func (t *EipMsg) GetIndex(idx int) (*Msg, error) {
-	r, err := t.Select("UniqueID = ?", idx)
+func (t *EipMsgHandler) GetIndex(idx int) (*EipMsg, error) {
+	r, err := t.Query(handler.DefaultCmd)
 	if err != nil {
 		return nil, err
 	}
-	if msg, ok := r.(*Msg); ok {
+	if msg, ok := r.(*EipMsg); ok {
 		return msg, nil
 	}
 	return nil, fmt.Errorf("query result multiple count")
 
 }
 
-func (t *EipMsg) GetCount(where CustomWhere) ([]Msg, error) {
-	if r, err := t.Select(where.Query, where.Args...); err != nil {
-		return []Msg{}, err
+func (t *EipMsgHandler) GetCount() ([]EipMsg, error) {
+	if r, err := t.Query(handler.DefaultCmd); err != nil {
+		return []EipMsg{}, err
 	} else {
 		return conv2Msg(r)
 	}
 }
 
-func (t *EipMsg) GetUnreadCount(where CustomWhere) ([]Msg, error) {
-	if r, err := t.Select(where.Query, where.Args...); err != nil {
-		return []Msg{}, err
+func (t *EipMsgHandler) GetUnreadCount() ([]EipMsg, error) {
+	if r, err := t.Query(handler.DefaultCmd); err != nil {
+		return []EipMsg{}, err
 	} else {
 		return conv2Msg(r)
 	}
 }
 
-func (t *EipMsg) GetAll(where CustomWhere, start int, count int) ([]Msg, error) {
-	args := make([]interface{}, 0)
-	args = append(args, start, count)
-	args = append(args, where.Args...)
-
-	if r, err := t.Select(where.Query, args...); err != nil {
-		return []Msg{}, err
+func (t *EipMsgHandler) GetAll(start int, count int) ([]EipMsg, error) {
+	var msgs []EipMsg
+	if r, err := t.Query(handler.Cmd{Model: &msgs, Start: start, Count: count}); err != nil {
+		return []EipMsg{}, err
 	} else {
 		return conv2Msg(r)
 	}
 }
 
-func (t *EipMsg) MarkRead(idx int) error {
-	return t.Update(idx, "Read", true)
+func (t *EipMsgHandler) MarkRead(idx int) error {
+	return t.Update(handler.DefaultCmd)
 }
 
 //For testing only
-func (t *EipMsg) GetUnreadForAsync(ctx context.Context, maxCount int) <-chan *Msg {
-	data := make(chan *Msg, 30) //buffer channel
+func (t *EipMsgHandler) GetUnreadForAsync(ctx context.Context, maxCount int) <-chan *EipMsg {
+	data := make(chan *EipMsg, 30) //buffer channel
 	go func() {
 		defer close(data)
 		var err error
@@ -96,7 +113,7 @@ func (t *EipMsg) GetUnreadForAsync(ctx context.Context, maxCount int) <-chan *Ms
 				case <-ctx.Done():
 					return
 				default:
-					data <- &Msg{UniqueID: i, Subject: fmt.Sprintf("test_%d", i)}
+					data <- &EipMsg{UniqueID: i, Subject: fmt.Sprintf("test_%d", i)}
 				}
 			}
 		}

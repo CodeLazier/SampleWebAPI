@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-25 09:08:54
- * @LastEditTime: 2020-09-28 15:30:43
+ * @LastEditTime: 2020-09-28 21:48:30
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\v1\msgapi.go
@@ -15,8 +15,8 @@ import (
 	"net/http"
 	"strconv"
 	"test/cache"
-	"test/msg"
-	"test/msg/orm"
+	eipmsg "test/msg"
+
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -67,8 +67,8 @@ func VerifyToken() gin.HandlerFunc {
 func DoGetMessages() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		//use db pool,every db connection is a slow operation
-		eip := &msg.EipMsg{
-			Control: orm.NewOrmMock(),
+		eip := &eipmsg.EipMsgHandler{
+			//Control: handler.NewMsgDB(handler.MsgDBConfig{DBConn: ""}),
 		}
 		//we take it of the cache
 		cc := cache.GetInstance()
@@ -77,7 +77,7 @@ func DoGetMessages() gin.HandlerFunc {
 			log.Println("cached...")
 		} else {
 			//Cache penetration
-			if msgs, err := eip.GetAll(msg.CustomWhere{}, 0, -1); err == nil {
+			if msgs, err := eip.GetAll(0, -1); err == nil {
 				c.JSON(http.StatusOK, NewResponseData(msgs, err))
 				_ = cc.Add("username", cache.NewCacheItem(msgs, 3*time.Second))
 				log.Println("cache penetration")
@@ -91,8 +91,8 @@ func DoGetMessages() gin.HandlerFunc {
 
 func DoMessagesMarkRead() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eip := &msg.EipMsg{
-			Control: &orm.OrmMock{},
+		eip := &eipmsg.EipMsgHandler{
+			//Control: &orm.OrmMock{},
 		}
 		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
 			log.Print(err)
@@ -108,8 +108,8 @@ func DoMessagesMarkRead() gin.HandlerFunc {
 
 func DoGetMessage() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eip := &msg.EipMsg{
-			Control: orm.NewOrmMock(),
+		eip := &eipmsg.EipMsgHandler{
+			//Control: orm.NewOrmMock(),
 		}
 		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
 			log.Print(err)
