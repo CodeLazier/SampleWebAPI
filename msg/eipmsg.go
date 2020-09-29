@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:20:05
- * @LastEditTime: 2020-09-29 15:21:42
+ * @LastEditTime: 2020-09-29 15:27:18
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\db\eip.go
@@ -12,27 +12,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
-
 	"test/cache"
 	"test/handler"
+	"time"
 )
-
-type Messages interface {
-	//get msgs for read,sort by senddate
-	GetUnread(start int, count int) (interface{}, error)
-	//get msg for uniqueid
-	GetIndex(id int) (interface{}, error)
-	//get all msgs,sort by senddate
-	GetAll(start int, count int) (interface{}, error)
-	//set read
-	MarkRead(idx int) error
-
-	GetUnradCount() (int64, error)
-	GetCount() (int64, error)
-
-	//...
-}
 
 //Eip impl
 type EipMsgHandler struct {
