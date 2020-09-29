@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:20:05
- * @LastEditTime: 2020-09-28 22:18:09
+ * @LastEditTime: 2020-09-29 15:21:42
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\db\eip.go
@@ -12,23 +12,24 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
+	"test/cache"
 	"test/handler"
-	. "test/handler"
 )
 
 type Messages interface {
 	//get msgs for read,sort by senddate
-	GetUnread(start int, count int) ([]EipMsg, error)
+	GetUnread(start int, count int) (interface{}, error)
 	//get msg for uniqueid
-	GetIndex(id int) (*EipMsg, error)
+	GetIndex(id int) (interface{}, error)
 	//get all msgs,sort by senddate
-	GetAll(start int, count int) ([]EipMsg, error)
+	GetAll(start int, count int) (interface{}, error)
 	//set read
 	MarkRead(idx int) error
 
-	GetUnradCount() (int, error)
-	GetCount() (int, error)
+	GetUnradCount() (int64, error)
+	GetCount() (int64, error)
 
 	//...
 }
@@ -36,13 +37,29 @@ type Messages interface {
 //Eip impl
 type EipMsgHandler struct {
 	handler.Control
+	UseCache bool
 }
 
-func conv2Msg(i interface{}) ([]EipMsg, error) {
+type cache_eipmsg struct {
+	prefix string
+	start  int
+	count  int
+	extra  interface{}
+}
+
+const (
+	cache_prefix_GetAll         string = "GetAll()"
+	cache_prefix_GetUnread      string = "GetUnread()"
+	cache_prefix_GetIndex       string = "GetIndex()"
+	cache_prefix_GetCount       string = "GetCount()"
+	cache_prefix_GetUnreadCount string = "GetUnreadCount()"
+)
+
+func conv2Msg(i interface{}) ([]handler.EipMsg, error) {
 	switch msgs := i.(type) {
-	case []EipMsg:
+	case []handler.EipMsg:
 		return msgs, nil
-	case *[]EipMsg:
+	case *[]handler.EipMsg:
 		return *msgs, nil
 
 	default:
@@ -50,58 +67,107 @@ func conv2Msg(i interface{}) ([]EipMsg, error) {
 	}
 }
 
-func (t *EipMsgHandler) GetUnread(start int, count int) ([]EipMsg, error) {
-	if r, err := t.Query(handler.DefaultCmd); err != nil {
-		return []EipMsg{}, err
-	} else {
-		return conv2Msg(r)
+func (t *EipMsgHandler) GetUnread(start int, count int) (interface{}, error) {
+	cmd := handler.NewMultiRecords(start, count)
+	cmd.Query = "ReadTAG <> ? OR ReadTAG IS NULL"
+	cmd.Args = []interface{}{1}
+
+	key := cache_eipmsg{prefix: cache_prefix_GetUnread, start: start, count: count}
+	r := t.try_getCache(key)
+	if r == nil {
+		if r, err := t.Query(cmd); err != nil {
+			return nil, err
+		} else {
+			return t.try_setCache(key, 30*time.Second, r), nil
+		}
 	}
+	return r, nil
 }
 
-func (t *EipMsgHandler) GetIndex(idx int) (*EipMsg, error) {
-	r, err := t.Query(handler.DefaultCmd)
-	if err != nil {
-		return nil, err
+func (t *EipMsgHandler) try_getCache(key cache_eipmsg) interface{} {
+	if t.UseCache {
+		if item, err := cache.GetInstance().Get(key); err != cache.ErrCacheNotFound {
+			return item.Data
+		}
 	}
-	if msg, ok := r.(*EipMsg); ok {
-		return msg, nil
-	}
-	return nil, fmt.Errorf("query result multiple count")
-
+	return nil
 }
 
-func (t *EipMsgHandler) GetCount() ([]EipMsg, error) {
-	if r, err := t.Query(handler.DefaultCmd); err != nil {
-		return []EipMsg{}, err
-	} else {
-		return conv2Msg(r)
+func (t *EipMsgHandler) try_setCache(key cache_eipmsg, exp time.Duration, value interface{}) interface{} {
+	if t.UseCache {
+		cache.GetInstance().Add(key, cache.NewCacheItem(value, exp))
 	}
+	return value
 }
 
-func (t *EipMsgHandler) GetUnreadCount() ([]EipMsg, error) {
-	if r, err := t.Query(handler.DefaultCmd); err != nil {
-		return []EipMsg{}, err
-	} else {
-		return conv2Msg(r)
+func (t *EipMsgHandler) GetIndex(idx int) (interface{}, error) {
+	cmd := handler.NewRecord("UniqueID = ?", idx)
+	key := cache_eipmsg{prefix: cache_prefix_GetIndex, start: idx, count: 1}
+	r := t.try_getCache(key)
+	if r == nil {
+		if r, err := t.Query(cmd); err != nil {
+			return nil, err
+		} else {
+			return t.try_setCache(key, 30*time.Minute, r), nil // 0.5 hour
+		}
 	}
+	return r, nil
 }
 
-func (t *EipMsgHandler) GetAll(start int, count int) ([]EipMsg, error) {
-	var msgs []EipMsg
-	if r, err := t.Query(handler.Cmd{Model: &msgs, Start: start, Count: count}); err != nil {
-		return []EipMsg{}, err
-	} else {
-		return conv2Msg(r)
+func (t *EipMsgHandler) GetCount() (int64, error) {
+	cmd := handler.NewMultiRecords(0, -1)
+	cmd.Order = ""
+	cmd.CalcCount = true
+	key := cache_eipmsg{prefix: cache_prefix_GetCount, start: 0, count: -1}
+	r := t.try_getCache(key)
+	if r == nil {
+		if r, err := t.Query(cmd); err != nil {
+			return -1, err
+		} else {
+			return t.try_setCache(key, 30*time.Second, r).(int64), nil
+		}
 	}
+	return r.(int64), nil
+}
+
+func (t *EipMsgHandler) GetUnreadCount() (int64, error) {
+	cmd := handler.NewMultiRecords(0, -1)
+	cmd.Order = ""
+	cmd.Query = "ReadTAG <> ? OR ReadTAG IS NULL"
+	cmd.Args = []interface{}{1}
+	cmd.CalcCount = true
+	key := cache_eipmsg{prefix: cache_prefix_GetUnreadCount, start: 0, count: -1}
+	r := t.try_getCache(key)
+	if r == nil {
+		if r, err := t.Query(cmd); err != nil {
+			return -1, err
+		} else {
+			return t.try_setCache(key, 30*time.Second, r).(int64), nil
+		}
+	}
+	return r.(int64), nil
+}
+
+func (t *EipMsgHandler) GetAll(start int, count int) (interface{}, error) {
+	key := cache_eipmsg{prefix: cache_prefix_GetAll, start: start, count: count}
+	r := t.try_getCache(key)
+	if r == nil {
+		if r, err := t.Query(handler.NewMultiRecords(start, count)); err != nil {
+			return nil, err
+		} else {
+			return t.try_setCache(key, 10*time.Second, r), nil
+		}
+	}
+	return r, nil
 }
 
 func (t *EipMsgHandler) MarkRead(idx int) error {
-	return t.Update(handler.DefaultCmd)
+	return t.Update(handler.Cmd{})
 }
 
 //For testing only
-func (t *EipMsgHandler) GetUnreadForAsync(ctx context.Context, maxCount int) <-chan *EipMsg {
-	data := make(chan *EipMsg, 30) //buffer channel
+func (t *EipMsgHandler) GetUnreadForAsync(ctx context.Context, maxCount int) <-chan *handler.EipMsg {
+	data := make(chan *handler.EipMsg, 30) //buffer channel
 	go func() {
 		defer close(data)
 		var err error
@@ -113,7 +179,7 @@ func (t *EipMsgHandler) GetUnreadForAsync(ctx context.Context, maxCount int) <-c
 				case <-ctx.Done():
 					return
 				default:
-					data <- &EipMsg{UniqueID: i, Subject: fmt.Sprintf("test_%d", i)}
+					data <- &handler.EipMsg{UniqueID: i, Subject: fmt.Sprintf("test_%d", i)}
 				}
 			}
 		}

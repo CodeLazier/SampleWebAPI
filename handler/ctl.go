@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-24 10:35:54
- * @LastEditTime: 2020-09-28 22:16:15
+ * @LastEditTime: 2020-09-29 11:48:30
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\msg\orm.go
@@ -12,12 +12,14 @@ import "time"
 
 type Cmd struct {
 	Model interface{} // query struct or model
-	Start int
-	Count int
-	Order string
+	Start int         // start offset
+	Count int         // get count records
+	Order string      // order
 	//add others if business needs
 	Query interface{}
 	Args  []interface{}
+	//if calc count
+	CalcCount bool
 }
 
 type EipMsg struct {
@@ -57,13 +59,24 @@ func (m EipMsg) TableName() string {
 	return "EIP_MessageMaster"
 }
 
-var DefaultCmd Cmd
+func NewRecord(query interface{}, args ...interface{}) Cmd {
+	var msgs EipMsg
+	a := make([]interface{}, 0)
+	a = append(a, args...)
+	return Cmd{
+		Model: &msgs,
+		Query: query,
+		Args:  a,
+	}
+}
 
-func init() {
-	msgs := &[]EipMsg{}
-	DefaultCmd = Cmd{
-		Model: msgs,
-		Count: -1,
+func NewMultiRecords(start, count int) Cmd {
+	var msgs []EipMsg
+	return Cmd{
+		Model: &msgs,
+		Start: start,
+		Count: count,
+		Order: "SendDate desc",
 	}
 }
 

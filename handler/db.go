@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-24 14:20:01
- * @LastEditTime: 2020-09-28 21:34:35
+ * @LastEditTime: 2020-09-29 12:01:15
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\msg\mock\ormmock.go
@@ -39,16 +39,24 @@ func NewMsgDB(cfg MsgDBConfig) (*MsgDB, error) {
 
 func (t *MsgDB) buildSql(cmd Cmd) *gorm.DB {
 	if t.db != nil {
+		//optimization depends on the order
 		statement := t.db
+		if cmd.CalcCount {
+			statement = statement.Model(cmd.Model)
+		}
 		if cmd.Order != "" {
 			statement = statement.Order(cmd.Order)
-		} else if cmd.Start > 0 {
-			statement = statement.Limit(cmd.Start)
-		} else if cmd.Count > 0 {
-			statement = statement.Offset(cmd.Count)
-		} else if cmd.Query != nil {
-			statement.Statement.Where(cmd.Query, cmd.Args...)
 		}
+		if cmd.Start > 0 {
+			statement = statement.Limit(cmd.Start)
+		}
+		if cmd.Count > 0 {
+			statement = statement.Offset(cmd.Count)
+		}
+		if cmd.Query != nil {
+			statement = statement.Where(cmd.Query, cmd.Args...)
+		}
+
 		return statement
 	}
 	return t.db
@@ -90,8 +98,15 @@ func (t *MsgDB) Query(cmd Cmd) (result interface{}, err error) {
 			}
 		}()
 
-		tx = t.buildSql(cmd).Find(cmd.Model)
-		result = cmd.Model
+		tx = t.buildSql(cmd)
+		if cmd.CalcCount {
+			var c int64 = -1
+			tx = tx.Count(&c)
+			result = c
+		} else {
+			tx = tx.Find(cmd.Model)
+			result = cmd.Model
+		}
 		err = tx.Error
 		if err != nil {
 			return result, err

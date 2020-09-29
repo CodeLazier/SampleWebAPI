@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-28 22:19:54
+ * @LastEditTime: 2020-09-29 15:15:27
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -218,30 +218,47 @@ func TestMockOrm(t *testing.T) {
 	}
 }
 
-//need actual environment
-func TestDBHandler(t *testing.T) {
+func NewEipDBHandler(useCach bool) *msg.EipMsgHandler {
 	eipDB, err := handler.NewMsgDB(handler.MsgDBConfig{
 		DBConn: "sqlserver://sa:sasa@localhost?database=WebEIP5",
 	})
 	if err != nil {
-		t.Fatal(err)
+		log.Fatal(err)
 	}
-	eip := &msg.EipMsgHandler{
-		Control: eipDB,
-	}
-	if msgs, err := eip.GetAll(0, -1); err != nil {
-		t.Log(err)
-		t.Fail()
-	} else {
-		t.Log(msgs)
+	return &msg.EipMsgHandler{
+		Control:  eipDB,
+		UseCache: useCach,
 	}
 
-	// if msg, err := eip.GetIndex(0); err != nil {
-	// 	t.Log(err)
-	// 	t.Fail()
-	// } else {
-	// 	t.Log(msg)
-	// }
+}
+
+func Benchmark_DBHandler(b *testing.B) {
+	eip := NewEipDBHandler(true)
+	for i := 0; i < b.N; i++ {
+		eip.GetAll(0, -1)
+		eip.GetUnread(0, -1)
+		eip.GetCount()
+		eip.GetUnreadCount()
+	}
+}
+
+//need actual environment
+func TestDBHandler(t *testing.T) {
+	eip := NewEipDBHandler(true)
+
+	errFunc := func(r interface{}, err error) {
+		if err != nil {
+			t.Log(err)
+			t.Fail()
+		} else {
+			t.Log(r)
+		}
+	}
+	errFunc(eip.GetAll(0, -1))
+	errFunc(eip.GetUnread(0, -1))
+	errFunc(eip.GetIndex(9))
+	errFunc(eip.GetCount())
+	errFunc(eip.GetUnreadCount())
 
 	// if err := eip.MarkRead(3); err != nil {
 	// 	t.Log(err)

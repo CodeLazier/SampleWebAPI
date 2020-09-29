@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-25 09:08:54
- * @LastEditTime: 2020-09-28 21:48:30
+ * @LastEditTime: 2020-09-29 15:23:50
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\v1\msgapi.go
@@ -14,9 +14,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"test/cache"
-	eipmsg "test/msg"
-
+	"test/handler"
+	"test/msg"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -28,6 +27,20 @@ type ResponseData struct {
 	ErrMsg string      `json:"err"`
 	ByTime int64       `json:"bytime"`
 	Result interface{} `json:"result"`
+}
+
+func NewEipDBHandler(useCach bool) *msg.EipMsgHandler {
+	eipDB, err := handler.NewMsgDB(handler.MsgDBConfig{
+		DBConn: "sqlserver://sa:sasa@localhost?database=WebEIP5",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	return &msg.EipMsgHandler{
+		Control:  eipDB,
+		UseCache: useCach,
+	}
+
 }
 
 func NewResponseData(r interface{}, err error) ResponseData {
@@ -67,31 +80,19 @@ func VerifyToken() gin.HandlerFunc {
 func DoGetMessages() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		//use db pool,every db connection is a slow operation
-		eip := &eipmsg.EipMsgHandler{
-			//Control: handler.NewMsgDB(handler.MsgDBConfig{DBConn: ""}),
-		}
-		//we take it of the cache
-		cc := cache.GetInstance()
-		if v, err := cc.Get("username"); err != cache.ErrCacheNotFound {
-			c.JSON(http.StatusOK, NewResponseData(v, err))
-			log.Println("cached...")
+		eip := NewEipDBHandler(true)
+		if msgs, err := eip.GetAll(0, -1); err == nil {
+			c.JSON(http.StatusOK, NewResponseData(msgs, err))
 		} else {
-			//Cache penetration
-			if msgs, err := eip.GetAll(0, -1); err == nil {
-				c.JSON(http.StatusOK, NewResponseData(msgs, err))
-				_ = cc.Add("username", cache.NewCacheItem(msgs, 3*time.Second))
-				log.Println("cache penetration")
-			} else {
-				log.Print(err)
-				c.JSON(http.StatusOK, NewResponseData(nil, err))
-			}
+			log.Print(err)
+			c.JSON(http.StatusOK, NewResponseData(nil, err))
 		}
 	}
 }
 
 func DoMessagesMarkRead() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eip := &eipmsg.EipMsgHandler{
+		eip := &msg.EipMsgHandler{
 			//Control: &orm.OrmMock{},
 		}
 		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
@@ -108,7 +109,7 @@ func DoMessagesMarkRead() gin.HandlerFunc {
 
 func DoGetMessage() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eip := &eipmsg.EipMsgHandler{
+		eip := &msg.EipMsgHandler{
 			//Control: orm.NewOrmMock(),
 		}
 		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
