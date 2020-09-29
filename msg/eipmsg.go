@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:20:05
- * @LastEditTime: 2020-09-29 15:27:18
+ * @LastEditTime: 2020-09-29 21:56:03
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\db\eip.go
@@ -69,7 +69,7 @@ func (t *EipMsgHandler) GetUnread(start int, count int) (interface{}, error) {
 
 func (t *EipMsgHandler) try_getCache(key cache_eipmsg) interface{} {
 	if t.UseCache {
-		if item, err := cache.GetInstance().Get(key); err != cache.ErrCacheNotFound {
+		if item, err := cache.GetSimpleCacheInstance().Get(key); err != cache.ErrCacheNotFound {
 			return item.Data
 		}
 	}
@@ -78,7 +78,7 @@ func (t *EipMsgHandler) try_getCache(key cache_eipmsg) interface{} {
 
 func (t *EipMsgHandler) try_setCache(key cache_eipmsg, exp time.Duration, value interface{}) interface{} {
 	if t.UseCache {
-		cache.GetInstance().Add(key, cache.NewCacheItem(value, exp))
+		cache.GetSimpleCacheInstance().Add(key, cache.NewCacheItem(value, exp))
 	}
 	return value
 }

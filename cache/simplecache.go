@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-25 12:02:36
- * @LastEditTime: 2020-09-27 11:37:08
+ * @LastEditTime: 2020-09-29 21:51:02
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\cache\simplecache.go
@@ -88,7 +88,7 @@ func (t *simpleCache) Clear() {
 
 var sc *simpleCache
 
-func GetInstance() *simpleCache {
+func GetSimpleCacheInstance() *simpleCache {
 	return sc
 }
 

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-29 15:31:08
+ * @LastEditTime: 2020-09-29 22:21:02
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -64,7 +64,7 @@ func Test_InterfaceCompatible(t *testing.T) {
 }
 
 func Benchmark_Add_Get(b *testing.B) {
-	c := cache.GetInstance()
+	c := cache.GetSimpleCacheInstance()
 
 	wg := sync.WaitGroup{}
 	w := func(key int, ca chan int) <-chan int {
@@ -97,8 +97,8 @@ func Benchmark_Add_Get(b *testing.B) {
 }
 
 func TestCache(t *testing.T) {
-	c := cache.GetInstance()
-	c2 := cache.GetInstance()
+	c := cache.GetSimpleCacheInstance()
+	c2 := cache.GetSimpleCacheInstance()
 	if unsafe.Pointer(c) != unsafe.Pointer(c2) {
 		log.Fatal("instance difference!")
 	}
@@ -240,6 +240,38 @@ func Benchmark_DBHandler(b *testing.B) {
 		eip.GetCount()
 		eip.GetUnreadCount()
 	}
+}
+
+func TestWriteQueueCreate(t *testing.T) {
+	wg := sync.WaitGroup{}
+	for i := 0; i < 100; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if cache.GetWriteQueueInstance() != cache.GetWriteQueueInstance() {
+				t.Fatal(errors.New("instance error"))
+			}
+
+		}()
+	}
+	wg.Wait()
+}
+
+func TestWriteQueue(t *testing.T) {
+	q := cache.GetWriteQueueInstance()
+	q.Push(2, 30, 4, 5, 6, 7, 8)
+	q.ActionsFun = func(v []interface{}) error {
+		t.Log(v)
+		return nil
+	}
+	time.Sleep(3 * time.Second)
+	q.Push("a", "b", "c", "d")
+	time.Sleep(3 * time.Second)
+
+	for i := 0; i < 100; i++ {
+		q.Push(rand.Intn(999))
+	}
+	time.Sleep(3 * time.Second)
 }
 
 //need actual environment
