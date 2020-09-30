@@ -1,7 +1,11 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
+<<<<<<< HEAD
  * @LastEditTime: 2020-09-30 15:23:53
+=======
+ * @LastEditTime: 2020-09-30 15:10:51
+>>>>>>> 50be06abfaafe7355517b13bd9f85f87573cd05c
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -146,6 +150,7 @@ func TestCache(t *testing.T) {
 				return
 			default:
 				m.RLock()
+<<<<<<< HEAD
 				//rand.Intn param is not zero
 				var newId int64
 				l := len(IDs)
@@ -154,6 +159,9 @@ func TestCache(t *testing.T) {
 				} else if l > 1 {
 					newId = IDs[rand.Intn(l-1)]
 				}
+=======
+				newId := IDs[rand.Intn(len(IDs)+1)]
+>>>>>>> 50be06abfaafe7355517b13bd9f85f87573cd05c
 				m.RUnlock()
 
 				if _, err := c.Get(fmt.Sprintf("test_%d", newId)); err == cache.ErrCacheNotFound {
