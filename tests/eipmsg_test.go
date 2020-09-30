@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-30 13:57:46
+ * @LastEditTime: 2020-09-30 14:45:57
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -278,36 +278,44 @@ func TestWriteQueue(t *testing.T) {
 
 //warning:will modify the database
 func TestDBUpdateHandler(t *testing.T) {
-	eip := NewEipDBHandler(true)
-	for i := 1; i < 100; i++ {
-		eip.MarkRead(i)
+	if testing.Short() {
+		t.Skip("skipping DB test mode")
+	} else {
+		eip := NewEipDBHandler(true)
+		for i := 1; i < 100; i++ {
+			eip.MarkRead(i)
+		}
+		time.Sleep(3 * time.Second)
 	}
-	time.Sleep(3 * time.Second)
 }
 
 //need actual environment
 func TestDBHandler(t *testing.T) {
-	eip := NewEipDBHandler(true)
+	if testing.Short() {
+		t.Skip("skipping DB test mode")
+	} else {
+		eip := NewEipDBHandler(true)
 
-	errFunc := func(r interface{}, err error) {
-		if err != nil {
-			t.Log(err)
-			t.Fail()
-		} else {
-			t.Log(r)
+		errFunc := func(r interface{}, err error) {
+			if err != nil {
+				t.Log(err)
+				t.Fail()
+			} else {
+				t.Log(r)
+			}
 		}
+
+		errFunc(eip.GetAll(0, -1))
+		errFunc(eip.GetUnread(0, -1))
+		errFunc(eip.GetIndex(9))
+		errFunc(eip.GetCount())
+		errFunc(eip.GetUnreadCount())
+
+		// if err := eip.MarkRead(3); err != nil {
+		// 	t.Log(err)
+		// 	t.Fail()
+		// }
 	}
-
-	errFunc(eip.GetAll(0, -1))
-	errFunc(eip.GetUnread(0, -1))
-	errFunc(eip.GetIndex(9))
-	errFunc(eip.GetCount())
-	errFunc(eip.GetUnreadCount())
-
-	// if err := eip.MarkRead(3); err != nil {
-	// 	t.Log(err)
-	// 	t.Fail()
-	// }
 }
 
 //set flag -v -count=1
