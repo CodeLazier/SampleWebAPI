@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-30 14:45:57
+ * @LastEditTime: 2020-09-30 14:50:19
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -166,13 +166,13 @@ func TestCache(t *testing.T) {
 		}
 	}
 
-	const count = 1000
+	const count = 100
 
 	for i := 0; i < count; i++ {
 		go f()
 	}
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < count/10; i++ {
 		wg.Add(1)
 		go f2()
 	}
