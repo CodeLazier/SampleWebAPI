@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:20:05
- * @LastEditTime: 2020-09-30 12:18:12
+ * @LastEditTime: 2020-09-30 12:41:34
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\db\eip.go
@@ -107,7 +107,7 @@ func (t *EipMsgHandler) GetUnreadCount() (int64, error) {
 	cmd := handler.NewMultiRecords(0, -1)
 	cmd.Order = ""
 	cmd.Query = "ReadTAG <> ? OR ReadTAG IS NULL"
-	cmd.Args = []interface{}{1}
+	cmd.Args = []interface{}{ReadValue}
 	cmd.CalcCount = true
 	r, err := t._getData(cache_eipmsg{prefix: cache_prefix_GetUnreadCount, start: 0, count: -1}, cmd, 10*time.Second)
 	if r != nil {
@@ -119,7 +119,7 @@ func (t *EipMsgHandler) GetUnreadCount() (int64, error) {
 func (t *EipMsgHandler) GetUnread(start int, count int) (interface{}, error) {
 	cmd := handler.NewMultiRecords(start, count)
 	cmd.Query = "ReadTAG <> ? OR ReadTAG IS NULL"
-	cmd.Args = []interface{}{1}
+	cmd.Args = []interface{}{ReadValue}
 
 	return t._getData(cache_eipmsg{prefix: cache_prefix_GetUnread, start: start, count: count}, cmd, 30*time.Second)
 }
