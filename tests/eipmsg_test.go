@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-30 12:34:25
+ * @LastEditTime: 2020-09-30 13:57:46
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -310,6 +310,7 @@ func TestDBHandler(t *testing.T) {
 	// }
 }
 
+//set flag -v -count=1
 func TestMSG_GetUnreadForAsync(t *testing.T) {
 	rand.Seed(time.Now().Unix())
 	ctx, cancel := context.WithCancel(context.Background())
