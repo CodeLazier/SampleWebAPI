@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-29 22:21:02
+ * @LastEditTime: 2020-09-30 12:34:25
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -19,6 +19,7 @@ import (
 	"test/cache"
 	"test/handler"
 	"test/msg"
+	"test/queue"
 
 	"testing"
 	"time"
@@ -59,12 +60,12 @@ func (s *Snowflake) GetId() (int64, error) {
 }
 
 func Test_InterfaceCompatible(t *testing.T) {
-	// var _ handler.Control = &handler.Eip{}
-	// _ = &handler.CtlMock{}
+	var _ handler.Control = &handler.MsgDB{}
+	_ = &handler.CtlMock{}
 }
 
 func Benchmark_Add_Get(b *testing.B) {
-	c := cache.GetSimpleCacheInstance()
+	c := cache.GetInstance()
 
 	wg := sync.WaitGroup{}
 	w := func(key int, ca chan int) <-chan int {
@@ -97,8 +98,8 @@ func Benchmark_Add_Get(b *testing.B) {
 }
 
 func TestCache(t *testing.T) {
-	c := cache.GetSimpleCacheInstance()
-	c2 := cache.GetSimpleCacheInstance()
+	c := cache.GetInstance()
+	c2 := cache.GetInstance()
 	if unsafe.Pointer(c) != unsafe.Pointer(c2) {
 		log.Fatal("instance difference!")
 	}
@@ -248,8 +249,8 @@ func TestWriteQueueCreate(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			if cache.GetWriteQueueInstance() != cache.GetWriteQueueInstance() {
-				t.Fatal(errors.New("instance error"))
+			if queue.GetInstance() != queue.GetInstance() {
+				t.Log(errors.New("instance error"))
 			}
 
 		}()
@@ -258,18 +259,28 @@ func TestWriteQueueCreate(t *testing.T) {
 }
 
 func TestWriteQueue(t *testing.T) {
-	q := cache.GetWriteQueueInstance()
+	q := queue.GetInstance()
 	q.Push(2, 30, 4, 5, 6, 7, 8)
-	q.ActionsFun = func(v []interface{}) error {
+	q.SetDoFun(func(v []interface{}) error {
 		t.Log(v)
 		return nil
-	}
-	time.Sleep(3 * time.Second)
+	}, false)
+	time.Sleep(2 * time.Second)
 	q.Push("a", "b", "c", "d")
-	time.Sleep(3 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	for i := 0; i < 100; i++ {
 		q.Push(rand.Intn(999))
+	}
+	time.Sleep(2 * time.Second)
+
+}
+
+//warning:will modify the database
+func TestDBUpdateHandler(t *testing.T) {
+	eip := NewEipDBHandler(true)
+	for i := 1; i < 100; i++ {
+		eip.MarkRead(i)
 	}
 	time.Sleep(3 * time.Second)
 }
@@ -286,6 +297,7 @@ func TestDBHandler(t *testing.T) {
 			t.Log(r)
 		}
 	}
+
 	errFunc(eip.GetAll(0, -1))
 	errFunc(eip.GetUnread(0, -1))
 	errFunc(eip.GetIndex(9))

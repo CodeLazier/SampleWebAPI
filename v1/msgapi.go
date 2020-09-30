@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-25 09:08:54
- * @LastEditTime: 2020-09-29 15:31:18
+ * @LastEditTime: 2020-09-30 12:30:07
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\v1\msgapi.go
@@ -33,6 +33,7 @@ type ResponseData struct {
 func NewEipDBHandler(useCach bool) *msg.EipMsgHandler {
 	eipDB, err := handler.NewMsgDB(handler.MsgDBConfig{
 		DBConn: "sqlserver://sa:sasa@localhost?database=WebEIP5",
+		Debug:  false, //true is output raw sql
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -78,6 +79,7 @@ func VerifyToken() gin.HandlerFunc {
 	}
 }
 
+//TODO Pagination
 func DoGetMessages() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		//use db pool,every db connection is a slow operation
@@ -91,11 +93,10 @@ func DoGetMessages() gin.HandlerFunc {
 	}
 }
 
+//TODO Pagination
 func DoMessagesMarkRead() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eip := &msg.EipMsgHandler{
-			//Control: &orm.OrmMock{},
-		}
+		eip := NewEipDBHandler(true)
 		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
 			log.Print(err)
 		} else {
@@ -110,9 +111,7 @@ func DoMessagesMarkRead() gin.HandlerFunc {
 
 func DoGetMessage() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eip := &msg.EipMsgHandler{
-			//Control: orm.NewOrmMock(),
-		}
+		eip := NewEipDBHandler(true)
 		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
 			log.Print(err)
 		} else {

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-24 10:35:54
- * @LastEditTime: 2020-09-29 11:48:30
+ * @LastEditTime: 2020-09-30 11:44:24
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\msg\orm.go
@@ -10,14 +10,24 @@ package handler
 
 import "time"
 
+type UpdateInfo struct {
+	Field string
+	Value interface{}
+}
+
 type Cmd struct {
 	Model interface{} // query struct or model
-	Start int         // start offset
-	Count int         // get count records
-	Order string      // order
+	//Select
+	Start int    // start offset
+	Count int    // get count records
+	Order string // order
 	//add others if business needs
 	Query interface{}
 	Args  []interface{}
+
+	//update
+	Update UpdateInfo
+
 	//if calc count
 	CalcCount bool
 }
@@ -60,11 +70,10 @@ func (m EipMsg) TableName() string {
 }
 
 func NewRecord(query interface{}, args ...interface{}) Cmd {
-	var msgs EipMsg
 	a := make([]interface{}, 0)
 	a = append(a, args...)
 	return Cmd{
-		Model: &msgs,
+		Model: &EipMsg{},
 		Query: query,
 		Args:  a,
 	}
@@ -77,6 +86,24 @@ func NewMultiRecords(start, count int) Cmd {
 		Start: start,
 		Count: count,
 		Order: "SendDate desc",
+	}
+}
+
+func NewUpdateRecord(field string, value interface{}, query interface{}, args ...interface{}) Cmd {
+	a := make([]interface{}, 0)
+	a = append(a, args...)
+	return Cmd{
+		Model:  &EipMsg{},
+		Query:  query,
+		Args:   a,
+		Update: UpdateInfo{Field: field, Value: value},
+	}
+}
+
+func NewUpdateMsg(msg EipMsg) Cmd {
+	return Cmd{
+		Model:  &EipMsg{},
+		Update: UpdateInfo{Field: "^All", Value: msg},
 	}
 }
 

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-24 14:20:01
- * @LastEditTime: 2020-09-29 12:01:15
+ * @LastEditTime: 2020-09-30 12:22:57
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\msg\mock\ormmock.go
@@ -28,6 +28,8 @@ type MsgDBConfig struct {
 	Debug  bool
 	//
 }
+
+var ERR_NO_AFFECTED error = fmt.Errorf("No affected rows")
 
 func NewMsgDB(cfg MsgDBConfig) (*MsgDB, error) {
 	r := &MsgDB{Cfg: cfg}
@@ -129,9 +131,21 @@ func (t *MsgDB) Update(cmd Cmd) (err error) {
 			}
 		}()
 
-		//tx := t.db.Model(&msg.Msg{}).Where("Id = ?", ).Update(field, value)
-		//return tx.Error
-		return nil
+		if cmd.Update.Value != nil {
+			var tx *gorm.DB
+			if cmd.Update.Field == "^All" {
+				tx = t.db.Model(cmd.Model).Where(cmd.Query, cmd.Args...).Updates(cmd.Model)
+			}
+			tx = t.db.Model(cmd.Model).Where(cmd.Query, cmd.Args...).Update(cmd.Update.Field, cmd.Update.Value)
+
+			if tx.Error != nil {
+				return tx.Error
+			}
+			if tx.RowsAffected == 0 {
+				return ERR_NO_AFFECTED
+			}
+			return nil
+		}
 	}
 	return errors.New("Open db first")
 }
