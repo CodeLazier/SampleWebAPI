@@ -27,8 +27,9 @@ check:
 compile:
   stage: build
   script:
-    - go build -race -ldflags "-extldflags '-static'" -o $CI_PROJECT_DIR/bin
+    - go build -race -ldflags "-extldflags '-static'" -o $CI_PROJECT_DIR/binary
   artifacts:
+    name: "$CI_PIPELINE_ID"
     expire_in: 1 week
     paths:
-      - bin
+      - binary
