@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-30 14:56:42
+ * @LastEditTime: 2020-09-30 15:10:51
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -146,7 +146,7 @@ func TestCache(t *testing.T) {
 				return
 			default:
 				m.RLock()
-				newId := IDs[rand.Intn(len(IDs))]
+				newId := IDs[rand.Intn(len(IDs)+1)]
 				m.RUnlock()
 
 				if _, err := c.Get(fmt.Sprintf("test_%d", newId)); err == cache.ErrCacheNotFound {
