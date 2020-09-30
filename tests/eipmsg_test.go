@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-09-30 14:50:19
+ * @LastEditTime: 2020-09-30 14:56:42
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
@@ -234,12 +234,16 @@ func NewEipDBHandler(useCach bool) *msg.EipMsgHandler {
 }
 
 func Benchmark_DBHandler(b *testing.B) {
-	eip := NewEipDBHandler(true)
-	for i := 0; i < b.N; i++ {
-		eip.GetAll(0, -1)
-		eip.GetUnread(0, -1)
-		eip.GetCount()
-		eip.GetUnreadCount()
+	if testing.Short() {
+		b.Skip("skipping DB test mode")
+	} else {
+		eip := NewEipDBHandler(true)
+		for i := 0; i < b.N; i++ {
+			eip.GetAll(0, -1)
+			eip.GetUnread(0, -1)
+			eip.GetCount()
+			eip.GetUnreadCount()
+		}
 	}
 }
 

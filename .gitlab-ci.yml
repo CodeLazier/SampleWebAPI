@@ -16,11 +16,13 @@ stages:
 
 format:
   stage: test
+  allow_failure: true
   script:
     #不应该包括DB测试,因为没有实际环境,只能测试Mock
     #- go fmt $(go list ./... | grep -v /vendor/)
     #- go vet $(go list ./... | grep -v /vendor/)
     - go test -v -count=1 -short test/tests #$(go list ./... | grep -v /vendor/)
+    - go test -v -count=1 -short test/tests -test.bench=. -run=none
 
 compile:
   stage: build
