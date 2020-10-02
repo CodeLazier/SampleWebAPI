@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:20:05
- * @LastEditTime: 2020-09-30 12:41:34
+ * @LastEditTime: 2020-09-30 21:59:11
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\db\eip.go
@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"test/cache"
 	"test/handler"
 	"test/queue"
@@ -88,7 +89,7 @@ func (t *EipMsgHandler) try_setCache(key cache_eipmsg, exp time.Duration, value 
 
 func (t *EipMsgHandler) GetIndex(idx int) (interface{}, error) {
 	//note:cache is 0.5 hour,if content doesn’t change
-	return t._getData(cache_eipmsg{prefix: cache_prefix_GetIndex, start: idx, count: 1}, handler.NewRecord("UniqueID = ?", idx), 30*time.Minute)
+	return t._getData(cache_eipmsg{prefix: cache_prefix_GetIndex, start: idx, count: 1}, handler.NewRecord("Id = ?", idx), 30*time.Minute)
 }
 
 func (t *EipMsgHandler) GetCount() (int64, error) {
@@ -137,6 +138,11 @@ func (t *EipMsgHandler) MarkRead(idx int) error {
 	return nil
 }
 
+func (t *EipMsgHandler) New(v interface{}) error {
+	_, err := t.Insert(handler.NewInsertMsg(v))
+	return err
+}
+
 //For testing only
 func (t *EipMsgHandler) GetUnreadForAsync(ctx context.Context, maxCount int) <-chan *handler.EipMsg {
 	data := make(chan *handler.EipMsg, 30) //buffer channel
@@ -151,7 +157,7 @@ func (t *EipMsgHandler) GetUnreadForAsync(ctx context.Context, maxCount int) <-c
 				case <-ctx.Done():
 					return
 				default:
-					data <- &handler.EipMsg{UniqueID: i, Subject: fmt.Sprintf("test_%d", i)}
+					data <- &handler.EipMsg{Id: i, Title: fmt.Sprintf("test_%d", i)}
 				}
 			}
 		}

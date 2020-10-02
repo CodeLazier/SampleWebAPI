@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 10:52:47
- * @LastEditTime: 2020-09-27 15:36:28
+ * @LastEditTime: 2020-10-02 17:20:13
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\main.go
@@ -33,8 +33,14 @@ func main() {
 	v1.GET("/getMessages", v.DoGetMessages())
 	v1.GET("/getMessage/:id", v.DoGetMessage())
 	v1.POST("/setMessageMarkRead/:id", v.DoMessagesMarkRead())
+	v1.POST("/msg", v.DoNewMessage())
 	v1.GET("/getToken", v.GetToken())
 
+	//init db
+	v.InitEipDBHandler()
+	if _, err := v.NewEipDBHandler(true); err != nil {
+		log.Fatalln(err)
+	}
 	//do config
 	server := &http.Server{
 		Addr:         ":9090",

@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-24 10:35:54
- * @LastEditTime: 2020-09-30 11:44:24
+ * @LastEditTime: 2020-10-01 21:41:46
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\msg\orm.go
@@ -34,39 +34,16 @@ type Cmd struct {
 
 type EipMsg struct {
 	//gorm.Model        // orm map
-	UniqueID        int       `json:"id" gorm:"column:UniqueID"`
-	GroupID         string    `json:"groupid" gorm:"column:GroupID"`
-	PGroupID        string    `json:"pgroupid" gorm:"column:PGroupID"`
-	DeptID          string    `json:"deptid" gorm:"column:DeptID"`
-	FromID          string    `json:"fromid" gorm:"column:FromID"`
-	FromName        string    `json:"fromname" gorm:"column:FromName"`
-	ToID            string    `json:"toid" gorm:"column:ToID"`
-	ToName          string    `json:"toname" gorm:"column:ToName"`
-	ToSavedValue    string    `json:"tosavedvalue" gorm:"column:ToSavedValue"`
-	ToForceReplyTAG int       `json:"toforcereplytag" gorm:"column:ToForceReplyTAG"`
-	CCID            string    `json:"ccid" gorm:"column:CCID"`
-	CCName          string    `json:"ccname" gorm:"column:CCName"`
-	CCSavedValue    string    `json:"ccsavedvalue" gorm:"column:CCSavedValue"`
-	CCForceReply    int       `json:"ccforcereplytag" gorm:"column:CCForceReplyTAG"`
-	BCCID           string    `json:"bccid" gorm:"column:BCCID"`
-	BCCName         string    `json:"bccname" gorm:"column:BCCName"`
-	BCCSavedValue   string    `json:"bccsavedvalue" gorm:"column:BCCSavedValue"`
-	SendDate        time.Time `json:"senddate" gorm:"column:SendDate"`
-
-	Subject   string `json:"subject" gorm:"column:Subject"`
-	Content   string `json:"content" gorm:"column:Content"`
-	Html      string `json:"htmltag" gorm:"column:HtmlTAG"`
-	Draft     string `json:"drafttag" gorm:"column:DraftTAG"`
-	Del       string `json:"deltag" gorm:"column:DelTAG"`
-	CompleteT int    `json:"completetag" gorm:"column:CompleteTAG"`
-	ReplyID   int    `json:"replyid" gorm:"column:ReplyID"`
-	Read      int    `json:"readtag" gorm:"column:ReadTAG"`
+	Id       int       `json:"id" gorm:"column:id;primary_key;autoIncrement"`
+	Title    string    `json:"title" gorm:"column:title"`
+	Content  string    `json:"content" gorm:"column:content"`
+	CreateAt time.Time `json:"createAt" gorm:"column:createAt;autoCreateTime"`
 
 	//...
 }
 
 func (m EipMsg) TableName() string {
-	return "EIP_MessageMaster"
+	return "messages"
 }
 
 func NewRecord(query interface{}, args ...interface{}) Cmd {
@@ -85,7 +62,7 @@ func NewMultiRecords(start, count int) Cmd {
 		Model: &msgs,
 		Start: start,
 		Count: count,
-		Order: "SendDate desc",
+		Order: "\"id\" desc", // ID为自增字段,createAt为创建时间,所以createAt可能会有重复(大并发量),但Id不会
 	}
 }
 
@@ -107,8 +84,19 @@ func NewUpdateMsg(msg EipMsg) Cmd {
 	}
 }
 
+func NewInsertMsg(msg interface{}) Cmd {
+	return Cmd{
+		Model: &EipMsg{},
+		Update: UpdateInfo{
+			Field: "^Insert",
+			Value: msg,
+		},
+	}
+}
+
 type Control interface {
 	OpenOrm(...string) error
 	Query(cmd Cmd) (interface{}, error)
 	Update(cmd Cmd) error
+	Insert(cmd Cmd) (interface{}, error)
 }

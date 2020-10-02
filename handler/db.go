@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-09-24 14:20:01
- * @LastEditTime: 2020-09-30 12:22:57
+ * @LastEditTime: 2020-10-01 22:35:50
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \pre_work\msg\mock\ormmock.go
@@ -11,9 +11,11 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"runtime"
 	"sync"
+	"time"
 
-	"gorm.io/driver/sqlserver"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -30,6 +32,53 @@ type MsgDBConfig struct {
 }
 
 var ERR_NO_AFFECTED error = fmt.Errorf("No affected rows")
+
+var _one sync.Once
+var _msgdb *MsgDB
+
+var _DB_DNS string
+var _DB_DEBUG_MODE bool
+
+func InitDB(dns string, debug bool) {
+	if _DB_DNS != "" {
+		//DB dns will only take valid the first time you set it up
+	} else {
+		_DB_DNS = dns
+		_DB_DEBUG_MODE = debug
+	}
+}
+
+func GetInstance() (*MsgDB, error) {
+	var err error
+	_one.Do(func() {
+		cf := func() error {
+			if _msgdb, err = NewMsgDB(MsgDBConfig{
+				DBConn: _DB_DNS,        // "user=postgres password=sasa dbname=postgres port=5432",
+				Debug:  _DB_DEBUG_MODE, //true is output raw sql
+			}); err != nil {
+				return err
+			}
+			return nil
+		}
+
+		checkf := func() {
+			ticker := time.NewTicker(10 * time.Second)
+			for {
+				<-ticker.C
+				if _msgdb != nil {
+					if err := _msgdb.Ping(); err != nil {
+						cf()
+					}
+				}
+			}
+		}
+
+		if cf() == nil {
+			go checkf()
+		}
+	})
+	return _msgdb, err
+}
 
 func NewMsgDB(cfg MsgDBConfig) (*MsgDB, error) {
 	r := &MsgDB{Cfg: cfg}
@@ -49,12 +98,9 @@ func (t *MsgDB) buildSql(cmd Cmd) *gorm.DB {
 		if cmd.Order != "" {
 			statement = statement.Order(cmd.Order)
 		}
-		if cmd.Start > 0 {
-			statement = statement.Limit(cmd.Start)
-		}
-		if cmd.Count > 0 {
-			statement = statement.Offset(cmd.Count)
-		}
+		statement = statement.Limit(cmd.Count)
+		statement = statement.Offset(cmd.Start)
+
 		if cmd.Query != nil {
 			statement = statement.Where(cmd.Query, cmd.Args...)
 		}
@@ -64,13 +110,34 @@ func (t *MsgDB) buildSql(cmd Cmd) *gorm.DB {
 	return t.db
 }
 
+func (t *MsgDB) _recover() error {
+	var err error
+	var r interface{}
+	if r = recover(); r != nil {
+		err = r.(error)
+		fmt.Println(r)
+	}
+	return err
+}
+
+func (t *MsgDB) Ping() error {
+	if t.db != nil {
+		if db, err := t.db.DB(); err != nil {
+			return err
+		} else {
+			return db.Ping()
+		}
+	}
+	return fmt.Errorf("db is null")
+}
+
 func (t *MsgDB) OpenOrm(cfg ...string) error {
 	t.Lock()
 	defer t.Unlock()
 	if len(cfg) > 0 {
 		dsn := cfg[0]
 		var err error
-		if t.db, err = gorm.Open(sqlserver.Open(dsn), &gorm.Config{}); err != nil {
+		if t.db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{}); err != nil {
 			return err
 		} else {
 			db, err := t.db.DB()
@@ -80,10 +147,28 @@ func (t *MsgDB) OpenOrm(cfg ...string) error {
 			if t.Cfg.Debug {
 				t.db = t.db.Debug()
 			}
-			return db.Ping()
+			db.SetMaxIdleConns(runtime.NumCPU() * 2)
+			//default inifinte
+			//db.SetConnMaxLifetime(time.Hour)
+			return t.Ping()
 		}
 	}
 	return fmt.Errorf("config is null")
+}
+
+func (t *MsgDB) Insert(cmd Cmd) (interface{}, error) {
+	if t.db != nil {
+		t.Lock()
+		defer t.Unlock()
+		defer t._recover()
+		if msg, ok := cmd.Update.Value.(EipMsg); ok {
+			tx := t.db.Create(&msg)
+			return msg, tx.Error
+		} else {
+			return nil, fmt.Errorf("interface is not compatible")
+		}
+	}
+	return nil, errors.New("Open db first")
 }
 
 func (t *MsgDB) Query(cmd Cmd) (result interface{}, err error) {
@@ -92,13 +177,7 @@ func (t *MsgDB) Query(cmd Cmd) (result interface{}, err error) {
 		defer t.RUnlock()
 
 		var tx *gorm.DB
-		defer func() {
-			var r interface{}
-			if r = recover(); r != nil {
-				err = r.(error)
-				fmt.Println(r)
-			}
-		}()
+		defer t._recover()
 
 		tx = t.buildSql(cmd)
 		if cmd.CalcCount {
@@ -123,13 +202,7 @@ func (t *MsgDB) Update(cmd Cmd) (err error) {
 	if t.db != nil {
 		t.Lock()
 		defer t.Unlock()
-		defer func() {
-			var r interface{}
-			if r = recover(); r != nil {
-				err = r.(error)
-				fmt.Println(r)
-			}
-		}()
+		defer t._recover()
 
 		if cmd.Update.Value != nil {
 			var tx *gorm.DB

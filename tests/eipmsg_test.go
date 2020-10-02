@@ -1,15 +1,11 @@
 /*
  * @Author: your name
  * @Date: 2020-09-22 11:57:35
-<<<<<<< HEAD
- * @LastEditTime: 2020-09-30 15:26:56
-=======
- * @LastEditTime: 2020-09-30 15:10:51
->>>>>>> 50be06abfaafe7355517b13bd9f85f87573cd05c
+ * @LastEditTime: 2020-10-02 15:38:45
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: \test\tests\msg_test.go
-*/
+ */
 package tests
 
 import (
@@ -230,32 +226,41 @@ func TestMockOrm(t *testing.T) {
 	}
 }
 
-func NewEipDBHandler(useCach bool) *msg.EipMsgHandler {
-	eipDB, err := handler.NewMsgDB(handler.MsgDBConfig{
-		DBConn: "sqlserver://sa:sasa@localhost?database=WebEIP5",
-	})
-	if err != nil {
-		log.Fatal(err)
+func NewEipDBHandler(useCache bool) (*msg.EipMsgHandler, error) {
+	handler.InitDB("user=postgres password=sasa dbname=postgres port=5432", true)
+	if dbctl, err := handler.GetInstance(); err != nil {
+		return nil, err
+	} else {
+		return &msg.EipMsgHandler{
+			Control:  dbctl,
+			UseCache: useCache,
+		}, nil
 	}
-	return &msg.EipMsgHandler{
-		Control:  eipDB,
-		UseCache: useCach,
-	}
-
 }
 
 func Benchmark_DBHandler(b *testing.B) {
 	if testing.Short() {
 		b.Skip("skipping DB test mode")
 	} else {
-		eip := NewEipDBHandler(true)
+		eip, _ := NewEipDBHandler(true)
 		for i := 0; i < b.N; i++ {
 			eip.GetAll(0, -1)
-			eip.GetUnread(0, -1)
+			//eip.GetUnread(0, -1)
 			eip.GetCount()
-			eip.GetUnreadCount()
+			//eip.GetUnreadCount()
 		}
 	}
+}
+
+func Test_t(t *testing.T) {
+	var ch chan struct{}
+	go func() {
+		<-ch
+		t.Log("ok")
+	}()
+	//ch = make(chan struct{})
+	ch <- struct{}{}
+	//time.Sleep(6 * time.Second)
 }
 
 func TestWriteQueueCreate(t *testing.T) {
@@ -296,11 +301,52 @@ func TestDBUpdateHandler(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping DB test mode")
 	} else {
-		eip := NewEipDBHandler(true)
+		eip, _ := NewEipDBHandler(true)
 		for i := 1; i < 100; i++ {
 			eip.MarkRead(i)
 		}
 		time.Sleep(3 * time.Second)
+	}
+}
+
+func TestDBReadHandler_many_concurrency(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping DB test mode")
+	} else {
+		wg := sync.WaitGroup{}
+		count := 500 //many concurrency?
+		wg.Add(count)
+		for i := 0; i < count; i++ {
+			go func(i int) {
+				defer wg.Done()
+				eip, _ := NewEipDBHandler(false) //disable cache
+				eip.GetAll(0, -1)
+
+			}(i)
+		}
+		wg.Wait()
+	}
+}
+
+func TestDBInsertHandler_many_concurrency(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping DB test mode")
+	} else {
+		wg := sync.WaitGroup{}
+		count := 5000 //many concurrency?
+		wg.Add(count)
+
+		for i := 0; i < count; i++ {
+			go func(i int) {
+				defer wg.Done()
+				eip, _ := NewEipDBHandler(true)
+				eip.New(handler.EipMsg{
+					Title:   fmt.Sprintf("test%d", i),
+					Content: fmt.Sprintf("content is %d", i),
+				})
+			}(i)
+		}
+		wg.Wait()
 	}
 }
 
@@ -309,7 +355,7 @@ func TestDBHandler(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping DB test mode")
 	} else {
-		eip := NewEipDBHandler(true)
+		eip, _ := NewEipDBHandler(true)
 
 		errFunc := func(r interface{}, err error) {
 			if err != nil {
@@ -320,16 +366,12 @@ func TestDBHandler(t *testing.T) {
 			}
 		}
 
-		errFunc(eip.GetAll(0, -1))
-		errFunc(eip.GetUnread(0, -1))
-		errFunc(eip.GetIndex(9))
+		errFunc(eip.GetAll(0, 10))
+		// errFunc(eip.GetUnread(0, -1))
+		errFunc(eip.GetIndex(11017))
 		errFunc(eip.GetCount())
-		errFunc(eip.GetUnreadCount())
+		// errFunc(eip.GetUnreadCount())
 
-		// if err := eip.MarkRead(3); err != nil {
-		// 	t.Log(err)
-		// 	t.Fail()
-		// }
 	}
 }
 
@@ -353,7 +395,7 @@ func TestMSG_GetUnreadForAsync(t *testing.T) {
 			for data := range msgs {
 				if data != nil {
 					*count++
-					t.Log(data.UniqueID, data.Subject)
+					t.Log(data.Id, data.Title)
 				} else {
 					t.Error("read data is error")
 				}

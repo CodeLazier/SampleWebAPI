@@ -1,4 +1,6 @@
 image: golang:latest
+services:
+  - name: postgres:latest
 
 variables:
   # Please edit to your GitLab project
