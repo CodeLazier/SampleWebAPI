@@ -1,12 +1,3 @@
-/*
- * @Author: your name
- * @Date: 2020-09-25 09:08:54
- * @LastEditTime: 2020-10-02 17:24:36
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \pre_work\v1\msgapi.go
- * 概念性的代码,缺少严谨和必要的重构,由于还没有实现鉴权所以缺少必要的如user等字段来获取资料
- */
 package v1
 
 import (
@@ -40,19 +31,14 @@ type NewEipMsg struct {
 
 type PostMsgHandler func(msg NewEipMsg) interface{}
 
-var post_eipmsg PostMsgHandler = func() PostMsgHandler {
+var postmsg_db  = func() PostMsgHandler {
 	msgChan := make(chan NewEipMsg)
 	one := sync.Once{}
 	func() {
 		one.Do(func() {
 			/*
-				*饥饿竞态的简单实现,如果饱和会阻塞提交直到db被缓解,如果单台db撑不了需要做分布式和负债平衡
-				*设置每CPU开启8 grouting,根据CPU频率可以调高.但上限是DB的并发处理能力,设为1则为队列形式,但吞吐量下降
-				*导致未充分压榨db并发和多核潜力且造成主观上的post性能效率下降
-				*本机实测10000请求,1000并发量 平均每个请求响应在0.3s内,99%的请求量均控制在0.5s以下
-				*具体见压测
-				!此写瓶颈在于DB,提高DB能有效提高写入负载.超大并发年和流量请求因写入缓存系统并进入Job队列...
-			*/
+			*抢先式并发的简单实现...
+			 */
 			for i := 0; i < runtime.NumCPU()*8; i++ {
 				go func() {
 					for {
@@ -64,7 +50,7 @@ var post_eipmsg PostMsgHandler = func() PostMsgHandler {
 							}); err != nil {
 								msg.result <- err
 							} else {
-								msg.result <- 0
+								msg.result <- 0 // success tag
 							}
 						} else {
 							log.Fatalln(err)
@@ -122,7 +108,7 @@ func NewResponseData(r interface{}, err error) ResponseData {
 func VerifyToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if parseToken(c.Query("token")) != nil {
-			c.JSON(http.StatusUnauthorized, NewResponseData(nil, fmt.Errorf("Unauthorized call")))
+			c.JSON(http.StatusUnauthorized, NewResponseData(nil, fmt.Errorf("unauthorized call")))
 			c.Abort()
 		} else {
 			//do business
@@ -147,18 +133,18 @@ func DoGetMessages() gin.HandlerFunc {
 
 func DoNewMessage() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		msg := NewEipMsg{}
-		if err := c.BindJSON(&msg); err != nil {
+		emsg := NewEipMsg{}
+		if err := c.BindJSON(&emsg); err != nil {
 			log.Println(err)
 			c.JSON(http.StatusOK, gin.H{"status": -1})
 		} else {
-			msg.result = make(chan interface{})
-			switch v := post_eipmsg(msg).(type) {
+			emsg.result = make(chan interface{})
+			switch v := postmsg_db(emsg).(type) {
 			case error:
 				log.Println(v)
 				c.JSON(http.StatusOK, gin.H{"status": v.Error()})
 			case int:
-				c.JSON(http.StatusOK, v)
+				c.JSON(http.StatusOK, gin.H{"status": v})
 			}
 		}
 	}
@@ -186,8 +172,8 @@ func DoGetMessage() gin.HandlerFunc {
 		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
 			log.Print(err)
 		} else {
-			if msg, err := eip.GetIndex(idx); err == nil {
-				c.JSON(http.StatusOK, msg)
+			if emsg, err := eip.GetIndex(idx); err == nil {
+				c.JSON(http.StatusOK, emsg)
 			} else {
 				log.Print(err)
 			}
@@ -202,5 +188,6 @@ func GetToken() gin.HandlerFunc {
 }
 
 func parseToken(token string) error {
+	_=token
 	return nil
 }

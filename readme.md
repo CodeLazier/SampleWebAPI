@@ -1,4 +1,10 @@
-a test project for msg sample
+A test project for msg sample and as a sample better practices are implemented.
+
+All design architectures use golang style as much,may be...
+
+This project is written in Go,use VSCode editor or Goland ¯\\_(ツ)_/¯
+
+---
 
 TABLE
 messages
