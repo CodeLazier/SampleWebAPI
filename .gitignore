@@ -2,3 +2,4 @@
 *.sum
 .vscode
 .idea
+*.zip

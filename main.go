@@ -1,28 +1,68 @@
-/*
- * @Author: your name
- * @Date: 2020-09-22 10:52:47
- * @LastEditTime: 2020-10-02 17:20:13
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \test\main.go
- */
 package main
 
 import (
 	"context"
+	"crypto/tls"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	v "test/v1" //replace vx will if upgrade in the future
 	"time"
+
+	v "test/v1" //replace vx will if upgrade in the future
 
 	"github.com/gin-contrib/cors"
 
 	"github.com/gin-gonic/gin"
 )
 
+//func Listen(addr string) (net.Listener, error) {
+//	var ln net.Listener
+//	if strings.HasPrefix(addr, "systemd:") {
+//		name := addr[8:]
+//		listeners, _ := activation.ListenersWithNames()
+//		listener, ok := listeners[name]
+//		if !ok {
+//			return nil, fmt.Errorf("listen systemd %s: socket not found", name)
+//		}
+//		ln = listener[0]
+//	} else {
+//		var err error
+//		ln, err = net.Listen("tcp", addr)
+//		if err != nil {
+//			return nil, err
+//		}
+//	}
+//
+//	return ln, nil
+//}
+
+func NewServer(addr string, handler http.Handler) *http.Server {
+	return &http.Server{
+		Addr:         addr,
+		Handler:      handler,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		//IdleTimeout:  120 * time.Second,
+		TLSConfig: &tls.Config{
+			NextProtos:       []string{"h2", "http/1.1"},
+			MinVersion:       tls.VersionTLS12,
+			CurvePreferences: []tls.CurveID{tls.CurveP256, tls.X25519},
+			CipherSuites: []uint16{
+				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			},
+			PreferServerCipherSuites: true,
+		},
+	}
+}
+
 func main() {
+	//gin.SetMode(gin.ReleaseMode)
 	g := gin.Default()
 	g.Use(cors.Default()) //Allow *
 	eip := g.Group("/eip")
@@ -30,24 +70,28 @@ func main() {
 	v1 := eip.Group("/v1")
 	v1.Use(v.VerifyToken())
 
-	v1.GET("/getMessages", v.DoGetMessages())
-	v1.GET("/getMessage/:id", v.DoGetMessage())
-	v1.POST("/setMessageMarkRead/:id", v.DoMessagesMarkRead())
+	//get msg record info,ex: msg/id/39
+	v1.GET("/msg/id/:id", v.DoGetMessage())
+	//fetch msgs info,ex:
+	//all msgs -> "msg/list/" eq 0,-1
+	//fetch msgs -> "msg/list/page,count"
+	//fetch msgs -> "msg/list/page" eq page,30
+	v1.GET("/msg/list/*page", v.DoGetMessages())
+	//create msg record
 	v1.POST("/msg", v.DoNewMessage())
+	//get all msgs count
+	v1.GET("/msg/count", v.DoGetMessagesCount())
 	v1.GET("/getToken", v.GetToken())
+
+	//v1.POST("/setMessageMarkRead/:id", v.DoMessagesMarkRead())
 
 	//init db
 	v.InitEipDBHandler()
 	if _, err := v.NewEipDBHandler(true); err != nil {
 		log.Fatalln(err)
 	}
-	//do config
-	server := &http.Server{
-		Addr:         ":9090",
-		Handler:      g,
-		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 30 * time.Second,
-	}
+
+	server := NewServer(":9090", g)
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
@@ -62,7 +106,7 @@ func main() {
 	}()
 
 	func() {
-		//It takes time to close, we give him time
+		//It take time to close, we give him time
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 

@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync"
+	"time"
+
 	"test/handler"
 	"test/msg"
-
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,14 +32,12 @@ type NewEipMsg struct {
 
 type PostMsgHandler func(msg NewEipMsg) interface{}
 
-var postmsg_db  = func() PostMsgHandler {
+//Do you have to snake style? I like C,shut up lint!!
+var postmsg_db = func() PostMsgHandler {
 	msgChan := make(chan NewEipMsg)
 	one := sync.Once{}
 	func() {
 		one.Do(func() {
-			/*
-			*抢先式并发的简单实现...
-			 */
 			for i := 0; i < runtime.NumCPU()*8; i++ {
 				go func() {
 					for {
@@ -117,16 +116,42 @@ func VerifyToken() gin.HandlerFunc {
 	}
 }
 
-//TODO Pagination
+func DoGetMessagesCount() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		eip, _ := NewEipDBHandler(true)
+		if r, err := eip.GetCount(); err != nil {
+			log.Fatalln(err)
+		} else {
+			c.JSON(http.StatusOK, gin.H{"count": r})
+		}
+	}
+}
+
 func DoGetMessages() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//use db pool,every db connection is a slow operation
+		var page, size int
+		var err error
+		size = -1
+		p := c.Param("page")
+		if p != "" && p != "/" {
+			s := strings.Split(p[1:], ",")
+			if len(s) > 0 && s[0] != "" {
+				size = 30
+				if page, err = strconv.Atoi(s[0]); err != nil {
+					//
+				} else if len(s) > 1 && s[1] != "" {
+					if size, err = strconv.Atoi(s[1]); err != nil {
+						//
+					}
+				}
+			}
+		}
 		eip, _ := NewEipDBHandler(true)
-		if msgs, err := eip.GetAll(0, -1); err == nil {
-			c.JSON(http.StatusOK, NewResponseData(msgs, err))
-		} else {
+		if msgs, err := eip.GetAll(page*size, size); err != nil {
 			log.Println(err)
-			c.JSON(http.StatusOK, NewResponseData(nil, err))
+			c.JSON(http.StatusOK, gin.H{"status": err.Error()})
+		} else {
+			c.JSON(http.StatusOK, msgs)
 		}
 	}
 }
@@ -150,17 +175,16 @@ func DoNewMessage() gin.HandlerFunc {
 	}
 }
 
-//TODO Pagination
 func DoMessagesMarkRead() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		eip, _ := NewEipDBHandler(true)
 		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
 			log.Print(err)
 		} else {
-			if err := eip.MarkRead(idx); err == nil {
-				c.JSON(http.StatusOK, gin.H{"error": 0})
+			if err := eip.MarkRead(idx); err != nil {
+				log.Fatalln(err)
 			} else {
-				log.Print(err)
+				c.JSON(http.StatusOK, gin.H{"error": 0})
 			}
 		}
 	}
@@ -170,12 +194,12 @@ func DoGetMessage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		eip, _ := NewEipDBHandler(true)
 		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
-			log.Print(err)
+			log.Fatalln(err)
 		} else {
-			if emsg, err := eip.GetIndex(idx); err == nil {
-				c.JSON(http.StatusOK, emsg)
-			} else {
+			if emsg, err := eip.GetIndex(idx); err != nil {
 				log.Print(err)
+			} else {
+				c.JSON(http.StatusOK, emsg)
 			}
 		}
 	}
@@ -188,6 +212,6 @@ func GetToken() gin.HandlerFunc {
 }
 
 func parseToken(token string) error {
-	_=token
+	_ = token
 	return nil
 }

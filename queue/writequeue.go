@@ -1,11 +1,3 @@
-/*
- * @Author: your name
- * @Date: 2020-09-29 21:14:24
- * @LastEditTime: 2020-09-30 12:30:59
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \pre_work\cache\writequeue.go
- */
 package queue
 
 import (

@@ -1,11 +1,3 @@
-/*
- * @Author: your name
- * @Date: 2020-09-22 11:20:05
- * @LastEditTime: 2020-09-30 21:59:11
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \test\db\eip.go
- */
 package msg
 
 import (

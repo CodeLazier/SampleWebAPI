@@ -1,11 +1,3 @@
-/*
- * @Author: your name
- * @Date: 2020-09-24 14:20:01
- * @LastEditTime: 2020-10-01 22:35:50
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \pre_work\msg\mock\ormmock.go
- */
 package handler
 
 import (

@@ -1,11 +1,3 @@
-/*
- * @Author: your name
- * @Date: 2020-09-22 11:57:35
- * @LastEditTime: 2020-10-02 15:38:45
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \test\tests\msg_test.go
- */
 package tests
 
 import (

@@ -1,11 +1,3 @@
-/*
- * @Author: your name
- * @Date: 2020-09-24 10:35:54
- * @LastEditTime: 2020-10-01 21:41:46
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \pre_work\msg\orm.go
- */
 package handler
 
 import "time"
