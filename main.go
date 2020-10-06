@@ -9,12 +9,29 @@ import (
 	"os/signal"
 	"time"
 
+	"test/handler"
 	v "test/v1" //replace vx will if upgrade in the future
 
 	"github.com/gin-contrib/cors"
 
+	"github.com/BurntSushi/toml"
 	"github.com/gin-gonic/gin"
 )
+
+type Config struct {
+	DB     DBConfig
+	Server ServerConfig
+}
+
+type DBConfig struct {
+	Conn  string `toml:"conn"`
+	Debug bool   `toml:"debug"`
+}
+
+type ServerConfig struct {
+	Addr  string `toml:"addr"`
+	Debug bool   `toml:"debug"`
+}
 
 //func Listen(addr string) (net.Listener, error) {
 //	var ln net.Listener
@@ -36,14 +53,14 @@ import (
 //
 //	return ln, nil
 //}
-
 func NewServer(addr string, handler http.Handler) *http.Server {
 	return &http.Server{
 		Addr:         addr,
 		Handler:      handler,
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
-		//IdleTimeout:  120 * time.Second,
+		IdleTimeout:  120 * time.Second,
+		//std sec for internet
 		TLSConfig: &tls.Config{
 			NextProtos:       []string{"h2", "http/1.1"},
 			MinVersion:       tls.VersionTLS12,
@@ -62,36 +79,44 @@ func NewServer(addr string, handler http.Handler) *http.Server {
 }
 
 func main() {
-	//gin.SetMode(gin.ReleaseMode)
+	cfg := Config{}
+	if _, err := toml.DecodeFile("./config.toml", &cfg); err != nil {
+		log.Fatalln(err)
+	}
+	if !cfg.Server.Debug {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	g := gin.Default()
 	g.Use(cors.Default()) //Allow *
 	eip := g.Group("/eip")
 
-	v1 := eip.Group("/v1")
-	v1.Use(v.VerifyToken())
+	{
+		v1 := eip.Group("/v1")
+		v1.Use(v.VerifyToken())
 
-	//get msg record info,ex: msg/id/39
-	v1.GET("/msg/id/:id", v.DoGetMessage())
-	//fetch msgs info,ex:
-	//all msgs -> "msg/list/" eq 0,-1
-	//fetch msgs -> "msg/list/page,count"
-	//fetch msgs -> "msg/list/page" eq page,30
-	v1.GET("/msg/list/*page", v.DoGetMessages())
-	//create msg record
-	v1.POST("/msg", v.DoNewMessage())
-	//get all msgs count
-	v1.GET("/msg/count", v.DoGetMessagesCount())
-	v1.GET("/getToken", v.GetToken())
-
-	//v1.POST("/setMessageMarkRead/:id", v.DoMessagesMarkRead())
+		//get msg record info,ex: msg/id/39
+		v1.GET("/msg/id/:id", v.DoGetMessage())
+		//fetch msgs info,ex:
+		//all msgs -> "msg/list/" eq 0,-1
+		//fetch msgs -> "msg/list/page,count"
+		//fetch msgs -> "msg/list/page" eq page,30
+		v1.GET("/msg/list/*page", v.DoGetMessages())
+		//create msg record
+		v1.POST("/msg", v.DoNewMessage())
+		//get all msgs count
+		v1.GET("/msg/count", v.DoGetMessagesCount())
+		v1.GET("/getToken", v.GetToken())
+		//v1.POST("/setMessageMarkRead/:id", v.DoMessagesMarkRead())
+	}
 
 	//init db
-	v.InitEipDBHandler()
+	handler.InitDB(cfg.DB.Conn, cfg.DB.Debug)
 	if _, err := v.NewEipDBHandler(true); err != nil {
 		log.Fatalln(err)
 	}
 
-	server := NewServer(":9090", g)
+	server := NewServer(cfg.Server.Addr, g)
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
@@ -106,7 +131,7 @@ func main() {
 	}()
 
 	func() {
-		//It take time to close, we give him time
+		//It takes time to close, we give him time
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 

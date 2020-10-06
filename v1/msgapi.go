@@ -1,14 +1,12 @@
 package v1
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"runtime"
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"test/handler"
 	"test/msg"
@@ -16,13 +14,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type ResponseData struct {
-	Id     int         `json:"id"` //stub
-	ErrNo  int         `json:"errno"`
-	ErrMsg string      `json:"err"`
-	ByTime int64       `json:"bytime"`
-	Result interface{} `json:"result"`
-}
+//type ResponseData struct {
+//	Id     int         `json:"id"` //stub
+//	ErrNo  int         `json:"errno"`
+//	ErrMsg string      `json:"err"`
+//	ByTime int64       `json:"bytime"`
+//	Result interface{} `json:"result"`
+//}
 
 type NewEipMsg struct {
 	Title   string `json:"title"`
@@ -32,8 +30,7 @@ type NewEipMsg struct {
 
 type PostMsgHandler func(msg NewEipMsg) interface{}
 
-//Do you have to snake style? I like C,shut up lint!!
-var postmsg_db = func() PostMsgHandler {
+var postMsg = func() PostMsgHandler {
 	msgChan := make(chan NewEipMsg)
 	one := sync.Once{}
 	func() {
@@ -65,11 +62,6 @@ var postmsg_db = func() PostMsgHandler {
 	}
 }()
 
-func InitEipDBHandler() {
-	handler.InitDB("user=postgres password=sasa dbname=postgres port=5432", false)
-
-}
-
 //call init first
 func NewEipDBHandler(useCache bool) (*msg.EipMsgHandler, error) {
 	if dbctl, err := handler.GetInstance(); err != nil {
@@ -82,19 +74,19 @@ func NewEipDBHandler(useCache bool) (*msg.EipMsgHandler, error) {
 	}
 }
 
-func NewResponseData(r interface{}, err error) ResponseData {
-	result := ResponseData{
-		ByTime: time.Now().Unix(),
-		Id:     0, //stub
-	}
-	if err != nil {
-		result.ErrNo = -1
-		result.ErrMsg = fmt.Sprint(err)
-	} else if r != nil {
-		result.Result = r
-	}
-	return result
-}
+//func NewResponseData(r interface{}, err error) ResponseData {
+//	result := ResponseData{
+//		ByTime: time.Now().Unix(),
+//		Id:     0, //stub
+//	}
+//	if err != nil {
+//		result.ErrNo = -1
+//		result.ErrMsg = fmt.Sprint(err)
+//	} else if r != nil {
+//		result.Result = r
+//	}
+//	return result
+//}
 
 // func wrapResponseData(res ResponseData) (string, error) {
 // 	if b, err := json.Marshal(&res); err != nil {
@@ -107,7 +99,7 @@ func NewResponseData(r interface{}, err error) ResponseData {
 func VerifyToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if parseToken(c.Query("token")) != nil {
-			c.JSON(http.StatusUnauthorized, NewResponseData(nil, fmt.Errorf("unauthorized call")))
+			c.JSON(http.StatusUnauthorized, gin.H{"status": "unauthorized call"}) //  NewResponseData(nil, fmt.Errorf("unauthorized call")))
 			c.Abort()
 		} else {
 			//do business
@@ -164,7 +156,7 @@ func DoNewMessage() gin.HandlerFunc {
 			c.JSON(http.StatusOK, gin.H{"status": -1})
 		} else {
 			emsg.result = make(chan interface{})
-			switch v := postmsg_db(emsg).(type) {
+			switch v := postMsg(emsg).(type) {
 			case error:
 				log.Println(v)
 				c.JSON(http.StatusOK, gin.H{"status": v.Error()})

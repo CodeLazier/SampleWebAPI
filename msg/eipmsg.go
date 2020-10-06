@@ -1,14 +1,12 @@
 package msg
 
 import (
-	"context"
 	"errors"
-	"fmt"
+	"time"
 
 	"test/cache"
 	"test/handler"
 	"test/queue"
-	"time"
 )
 
 //Eip impl
@@ -133,26 +131,4 @@ func (t *EipMsgHandler) MarkRead(idx int) error {
 func (t *EipMsgHandler) New(v interface{}) error {
 	_, err := t.Insert(handler.NewInsertMsg(v))
 	return err
-}
-
-//For testing only
-func (t *EipMsgHandler) GetUnreadForAsync(ctx context.Context, maxCount int) <-chan *handler.EipMsg {
-	data := make(chan *handler.EipMsg, 30) //buffer channel
-	go func() {
-		defer close(data)
-		var err error
-		if err != nil { // t.OpenDB("xx.xx.xx.xx"); err != nil {
-			data <- nil
-		} else {
-			for i := 0; i < maxCount; i++ {
-				select {
-				case <-ctx.Done():
-					return
-				default:
-					data <- &handler.EipMsg{Id: i, Title: fmt.Sprintf("test_%d", i)}
-				}
-			}
-		}
-	}()
-	return data
 }
