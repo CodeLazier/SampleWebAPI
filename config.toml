@@ -1,0 +1,7 @@
+[DB]
+conn = "user=postgres password=sasa dbname=postgres port=5432"
+debug = false
+
+[Server]
+addr = ":9090"
+debug = true
