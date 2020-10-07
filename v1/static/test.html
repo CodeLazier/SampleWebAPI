@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test API</title>
+</head>
+<body>
+Msg ID:
+<input id="id_value" value=""/>
+<button id="btn_getid" onclick="btn_getid_click()">Get</button> |
+<button id="btn_getCount" onclick="btn_getcount_click()">GetCount</button> |
+page/size
+<input id="page" value="0" style="width: 30px"/>/<input id="page_size" value="30" style="width: 30px"/>
+<button id="btn_getMsgs" onclick="btn_getmsgs_click()">GetMsgs</button> |
+<button id="btn_newMsg" onclick="btn_newmsg_click()">NewMsg</button>
+<br/>
+<br/>
+<textarea id="text_result" rows="30" cols="120" readonly style="border: 1px solid #DDD;resize:none">
+
+</textarea>
+<script type="text/javascript">
+    async function  btn_getid_click(){
+        var id=document.getElementById("id_value").value
+        var content=await fetch("id/"+id)
+        .then(function(response) {
+            if(response.status===200) {
+                return response.text()
+            }
+        }).catch(function(err){
+            console.log(err)
+        })
+
+        document.getElementById("text_result").value=content
+    }
+
+    async function  btn_getcount_click(){
+        var content=await fetch("count")
+        .then(function(response) {
+            if(response.status===200) {
+                return response.text()
+            }
+        }).catch(function(err){
+            console.log(err)
+        })
+
+        document.getElementById("text_result").value=content
+    }
+
+    async function  btn_getmsgs_click(){
+        var page= document.getElementById("page").value
+        var size= document.getElementById("page_size").value
+        var content=await fetch("list/"+page+","+size)
+        .then(function(response) {
+            if(response.status===200) {
+                return response.text()
+            }
+        }).catch(function(err){
+            console.log(err)
+        })
+
+        document.getElementById("text_result").value=content
+    }
+
+    async function  btn_newmsg_click(){
+        var content=await fetch("/eip/v1/msg",{
+            method:"POST",
+            mode: "cors",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body:JSON.stringify({
+                "title" : "a new title",
+                "content" : "a new content",
+            })})
+        .then(function(response) {
+            if(response.status===200) {
+                return response.text()
+            }
+        }).catch(function(err){
+            console.log(err)
+        })
+
+        document.getElementById("text_result").value=content
+    }
+</script>
+</body>
+</html>

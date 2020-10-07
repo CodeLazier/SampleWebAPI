@@ -1,6 +1,7 @@
 image: golang:latest
-services:
-  - name: postgres:latest
+
+#services:
+#  - name: postgres:latest
 
 variables:
   # Please edit to your GitLab project
@@ -12,19 +13,19 @@ before_script:
   - cd $GOPATH/src/$REPO_NAME
 
 stages:
-  - test
+  - static
   - build
   - deploy
 
 check:
-  stage: test
+  stage: static
   #allow_failure: true
   script:
     #不应该包括DB测试,因为没有实际环境,只能测试Mock
     #- go fmt $(go list ./... | grep -v /vendor/)
     #- go vet $(go list ./... | grep -v /vendor/)
-    - go test -v -count=1 -short test/tests #$(go list ./... | grep -v /vendor/)
-    - go test -v -count=1 -short test/tests -test.bench=. -run=none
+    - go static -v -count=1 -short static/tests #$(go list ./... | grep -v /vendor/)
+    - go static -v -count=1 -short static/tests -static.bench=. -run=none
 
 compile:
   stage: build

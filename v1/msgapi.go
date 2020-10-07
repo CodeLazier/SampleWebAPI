@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"test/handler"
 	"test/msg"
@@ -28,9 +29,9 @@ type NewEipMsg struct {
 	result  chan interface{}
 }
 
-type PostMsgHandler func(msg NewEipMsg) interface{}
+type postMsgHandler func(msg NewEipMsg) interface{}
 
-var postMsg = func() PostMsgHandler {
+var postMsg = func() postMsgHandler {
 	msgChan := make(chan NewEipMsg)
 	one := sync.Once{}
 	func() {
@@ -62,7 +63,6 @@ var postMsg = func() PostMsgHandler {
 	}
 }()
 
-//call init first
 func NewEipDBHandler(useCache bool) (*msg.EipMsgHandler, error) {
 	if dbctl, err := handler.GetInstance(); err != nil {
 		return nil, err
@@ -108,8 +108,31 @@ func VerifyToken() gin.HandlerFunc {
 	}
 }
 
+func parseCacheReq(c *gin.Context) (useCache bool, cacheTime time.Duration) {
+	useCache = false
+	cacheTime = 0 * time.Second
+	cc := strings.ToLower(c.GetHeader("Cache-Control"))
+	if strings.Contains(cc, "max-age") {
+		sp := strings.Split(cc, "=")
+		if len(sp) > 0 {
+			useCache = true
+			cacheTime = 5 * time.Second
+			if v, err := strconv.Atoi(strings.TrimSpace(sp[1])); err != nil {
+				log.Print(err)
+			} else {
+				cacheTime = time.Duration(v) * time.Second
+			}
+		}
+	} else {
+		useCache = !(cc == "no-cache" || cc == "no-store")
+	}
+	return
+}
+
 func DoGetMessagesCount() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		b, t := parseCacheReq(c)
+		_, _ = b, t
 		eip, _ := NewEipDBHandler(true)
 		if r, err := eip.GetCount(); err != nil {
 			log.Fatalln(err)
@@ -155,13 +178,17 @@ func DoNewMessage() gin.HandlerFunc {
 			log.Println(err)
 			c.JSON(http.StatusOK, gin.H{"status": -1})
 		} else {
-			emsg.result = make(chan interface{})
-			switch v := postMsg(emsg).(type) {
-			case error:
-				log.Println(v)
-				c.JSON(http.StatusOK, gin.H{"status": v.Error()})
-			case int:
-				c.JSON(http.StatusOK, gin.H{"status": v})
+			if emsg.Title == "" {
+				c.JSON(http.StatusOK, gin.H{"status": -1})
+			} else {
+				emsg.result = make(chan interface{})
+				switch v := postMsg(emsg).(type) {
+				case error:
+					log.Println(v)
+					c.JSON(http.StatusOK, gin.H{"status": v.Error()})
+				case int:
+					c.JSON(http.StatusOK, gin.H{"status": v})
+				}
 			}
 		}
 	}
@@ -200,6 +227,12 @@ func DoGetMessage() gin.HandlerFunc {
 func GetToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.String(http.StatusNotImplemented, "not impl")
+	}
+}
+
+func GetTextContent() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.HTML(200, "test.html", "flysnow_org")
 	}
 }
 

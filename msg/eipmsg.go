@@ -49,6 +49,7 @@ func conv2Msg(i interface{}) ([]handler.EipMsg, error) {
 	}
 }
 
+//TODO 缓冲控制应该再Client请求中动态请求和控制(如Cache-Control),不应该写死
 func (t *EipMsgHandler) _getData(key cache_eipmsg, cmd handler.Cmd, d time.Duration) (interface{}, error) {
 	r := t.try_getCache(key)
 	if r == nil {

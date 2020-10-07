@@ -89,6 +89,7 @@ func main() {
 
 	g := gin.Default()
 	g.Use(cors.Default()) //Allow *
+	g.LoadHTMLFiles("v1/static/test.html")
 	eip := g.Group("/eip")
 
 	{
@@ -107,6 +108,8 @@ func main() {
 		//get all msgs count
 		v1.GET("/msg/count", v.DoGetMessagesCount())
 		v1.GET("/getToken", v.GetToken())
+		//test
+		v1.GET("/msg/test", v.GetTextContent())
 		//v1.POST("/setMessageMarkRead/:id", v.DoMessagesMarkRead())
 	}
 

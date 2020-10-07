@@ -1,3 +1,5 @@
+//+build DB
+
 package tests
 
 import (
@@ -65,7 +67,7 @@ func NewEipDBHandler(useCache bool) (*msg.EipMsgHandler, error) {
 
 func Benchmark_DBHandler(b *testing.B) {
 	if testing.Short() {
-		b.Skip("skipping DB test mode")
+		b.Skip("skipping DB static mode")
 	} else {
 		eip, _ := NewEipDBHandler(true)
 		for i := 0; i < b.N; i++ {
@@ -79,7 +81,7 @@ func Benchmark_DBHandler(b *testing.B) {
 
 func TestDBUpdateHandler(t *testing.T) {
 	if testing.Short() {
-		t.Skip("skipping DB test mode")
+		t.Skip("skipping DB static mode")
 	} else {
 		eip, _ := NewEipDBHandler(true)
 		for i := 1; i < 100; i++ {
@@ -90,69 +92,59 @@ func TestDBUpdateHandler(t *testing.T) {
 }
 
 func TestDBReadHandler_many_concurrency(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping DB test mode")
-	} else {
-		wg := sync.WaitGroup{}
-		count := 500 //many concurrency?
-		wg.Add(count)
-		for i := 0; i < count; i++ {
-			go func(i int) {
-				defer wg.Done()
-				eip, _ := NewEipDBHandler(false) //disable cache
-				eip.GetAll(0, -1)
+	wg := sync.WaitGroup{}
+	count := 500 //many concurrency?
+	wg.Add(count)
+	for i := 0; i < count; i++ {
+		go func(i int) {
+			defer wg.Done()
+			eip, _ := NewEipDBHandler(false) //disable cache
+			eip.GetAll(0, -1)
 
-			}(i)
-		}
-		wg.Wait()
+		}(i)
 	}
+	wg.Wait()
+
 }
 
 func TestDBInsertHandler_many_concurrency(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping DB test mode")
-	} else {
-		wg := sync.WaitGroup{}
-		count := 5000 //many concurrency?
-		wg.Add(count)
+	wg := sync.WaitGroup{}
+	count := 5000 //many concurrency?
+	wg.Add(count)
 
-		for i := 0; i < count; i++ {
-			go func(i int) {
-				defer wg.Done()
-				eip, _ := NewEipDBHandler(true)
-				eip.New(handler.EipMsg{
-					Title:   fmt.Sprintf("test%d", i),
-					Content: fmt.Sprintf("content is %d", i),
-				})
-			}(i)
-		}
-		wg.Wait()
+	for i := 0; i < count; i++ {
+		go func(i int) {
+			defer wg.Done()
+			eip, _ := NewEipDBHandler(true)
+			eip.New(handler.EipMsg{
+				Title:   fmt.Sprintf("static%d", i),
+				Content: fmt.Sprintf("content is %d", i),
+			})
+		}(i)
 	}
+	wg.Wait()
+
 }
 
 //need actual environment
 func TestDBHandler(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping DB test mode")
-	} else {
-		eip, _ := NewEipDBHandler(true)
+	eip, _ := NewEipDBHandler(true)
 
-		errFunc := func(r interface{}, err error) {
-			if err != nil {
-				t.Log(err)
-				t.Fail()
-			} else {
-				t.Log(r)
-			}
+	errFunc := func(r interface{}, err error) {
+		if err != nil {
+			t.Log(err)
+			t.Fail()
+		} else {
+			t.Log(r)
 		}
-
-		errFunc(eip.GetAll(0, 10))
-		// errFunc(eip.GetUnread(0, -1))
-		errFunc(eip.GetIndex(11017))
-		errFunc(eip.GetCount())
-		// errFunc(eip.GetUnreadCount())
-
 	}
+
+	errFunc(eip.GetAll(0, 10))
+	// errFunc(eip.GetUnread(0, -1))
+	errFunc(eip.GetIndex(11017))
+	errFunc(eip.GetCount())
+	// errFunc(eip.GetUnreadCount())
+
 }
 
 //set flag -v -count=1
