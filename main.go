@@ -115,7 +115,7 @@ func main() {
 
 	//init db
 	handler.InitDB(cfg.DB.Conn, cfg.DB.Debug)
-	if _, err := v.NewEipDBHandler(true); err != nil {
+	if _, err := v.NewEipDBHandler(); err != nil {
 		log.Fatalln(err)
 	}
 

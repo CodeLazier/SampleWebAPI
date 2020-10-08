@@ -40,7 +40,7 @@ var postMsg = func() postMsgHandler {
 				go func() {
 					for {
 						msg := <-msgChan
-						if eip, err := NewEipDBHandler(true); err == nil {
+						if eip, err := NewEipDBHandler(); err == nil {
 							if err := eip.New(handler.EipMsg{
 								Title:   msg.Title,
 								Content: msg.Content,
@@ -63,13 +63,12 @@ var postMsg = func() postMsgHandler {
 	}
 }()
 
-func NewEipDBHandler(useCache bool) (*msg.EipMsgHandler, error) {
+func NewEipDBHandler() (*msg.EipMsgHandler, error) {
 	if dbctl, err := handler.GetInstance(); err != nil {
 		return nil, err
 	} else {
 		return &msg.EipMsgHandler{
-			Control:  dbctl,
-			UseCache: useCache,
+			Control: dbctl,
 		}, nil
 	}
 }
@@ -108,9 +107,10 @@ func VerifyToken() gin.HandlerFunc {
 	}
 }
 
-func parseCacheReq(c *gin.Context) (useCache bool, cacheTime time.Duration) {
+func parseCacheReq(c *gin.Context, f func()) (useCache bool, cacheTime time.Duration, fun func()) {
 	useCache = false
 	cacheTime = 0 * time.Second
+	fun = f
 	cc := strings.ToLower(c.GetHeader("Cache-Control"))
 	if strings.Contains(cc, "max-age") {
 		sp := strings.Split(cc, "=")
@@ -124,21 +124,21 @@ func parseCacheReq(c *gin.Context) (useCache bool, cacheTime time.Duration) {
 			}
 		}
 	} else {
-		useCache = !(cc == "no-cache" || cc == "no-store")
+		useCache = !(cc == "" || cc == "no-cache" || cc == "no-store")
 	}
 	return
 }
 
 func DoGetMessagesCount() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		b, t := parseCacheReq(c)
-		_, _ = b, t
-		eip, _ := NewEipDBHandler(true)
-		if r, err := eip.GetCount(); err != nil {
-			log.Fatalln(err)
-		} else {
-			c.JSON(http.StatusOK, gin.H{"count": r})
-		}
+		eip, _ := NewEipDBHandler()
+		eip.UseCache(parseCacheReq(c, func() {
+			if r, err := eip.GetCount(); err != nil {
+				log.Fatalln(err)
+			} else {
+				c.JSON(http.StatusOK, gin.H{"count": r})
+			}
+		}))
 	}
 }
 
@@ -161,13 +161,16 @@ func DoGetMessages() gin.HandlerFunc {
 				}
 			}
 		}
-		eip, _ := NewEipDBHandler(true)
-		if msgs, err := eip.GetAll(page*size, size); err != nil {
-			log.Println(err)
-			c.JSON(http.StatusOK, gin.H{"status": err.Error()})
-		} else {
-			c.JSON(http.StatusOK, msgs)
-		}
+		eip, _ := NewEipDBHandler()
+		eip.UseCache(parseCacheReq(c, func() {
+			if msgs, err := eip.GetAll(page*size, size); err != nil {
+				log.Println(err)
+				c.JSON(http.StatusOK, gin.H{"status": err.Error()})
+			} else {
+				c.JSON(http.StatusOK, msgs)
+			}
+		}))
+
 	}
 }
 
@@ -196,7 +199,7 @@ func DoNewMessage() gin.HandlerFunc {
 
 func DoMessagesMarkRead() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eip, _ := NewEipDBHandler(true)
+		eip, _ := NewEipDBHandler()
 		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
 			log.Print(err)
 		} else {
@@ -211,15 +214,17 @@ func DoMessagesMarkRead() gin.HandlerFunc {
 
 func DoGetMessage() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eip, _ := NewEipDBHandler(true)
+		eip, _ := NewEipDBHandler()
 		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
 			log.Fatalln(err)
 		} else {
-			if emsg, err := eip.GetIndex(idx); err != nil {
-				log.Print(err)
-			} else {
-				c.JSON(http.StatusOK, emsg)
-			}
+			eip.UseCache(parseCacheReq(c, func() {
+				if emsg, err := eip.GetIndex(idx); err != nil {
+					log.Print(err)
+				} else {
+					c.JSON(http.StatusOK, emsg)
+				}
+			}))
 		}
 	}
 }
@@ -232,7 +237,7 @@ func GetToken() gin.HandlerFunc {
 
 func GetTextContent() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.HTML(200, "test.html", "flysnow_org")
+		c.HTML(200, "test.html", nil)
 	}
 }
 
