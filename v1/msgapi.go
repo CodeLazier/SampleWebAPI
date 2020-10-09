@@ -107,12 +107,12 @@ func VerifyToken() gin.HandlerFunc {
 	}
 }
 
-func parseCacheReq(c *gin.Context, f func()) (useCache bool, cacheTime time.Duration, fun func()) {
+func processCacheReq(c *gin.Context, f func()) (useCache bool, cacheTime time.Duration, fun func()) {
 	useCache = false
 	cacheTime = 0 * time.Second
 	fun = f
-	cc := strings.ToLower(c.GetHeader("Cache-Control"))
-	if strings.Contains(cc, "max-age") {
+	cc := strings.ToLower(c.GetHeader("x-cache"))
+	if strings.Contains(cc, "x-expire") {
 		sp := strings.Split(cc, "=")
 		if len(sp) > 0 {
 			useCache = true
@@ -132,9 +132,11 @@ func parseCacheReq(c *gin.Context, f func()) (useCache bool, cacheTime time.Dura
 func DoGetMessagesCount() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		eip, _ := NewEipDBHandler()
-		eip.UseCache(parseCacheReq(c, func() {
+		eip.UseCache(processCacheReq(c, func() {
 			if r, err := eip.GetCount(); err != nil {
 				log.Fatalln(err)
+				//always return error code information instead of http status code
+				c.Status(http.StatusInternalServerError)
 			} else {
 				c.JSON(http.StatusOK, gin.H{"count": r})
 			}
@@ -162,7 +164,7 @@ func DoGetMessages() gin.HandlerFunc {
 			}
 		}
 		eip, _ := NewEipDBHandler()
-		eip.UseCache(parseCacheReq(c, func() {
+		eip.UseCache(processCacheReq(c, func() {
 			if msgs, err := eip.GetAll(page*size, size); err != nil {
 				log.Println(err)
 				c.JSON(http.StatusOK, gin.H{"status": err.Error()})
@@ -218,9 +220,11 @@ func DoGetMessage() gin.HandlerFunc {
 		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
 			log.Fatalln(err)
 		} else {
-			eip.UseCache(parseCacheReq(c, func() {
+			eip.UseCache(processCacheReq(c, func() {
 				if emsg, err := eip.GetIndex(idx); err != nil {
 					log.Print(err)
+					//always return error code information instead of http status code
+					c.Status(http.StatusNotFound)
 				} else {
 					c.JSON(http.StatusOK, emsg)
 				}

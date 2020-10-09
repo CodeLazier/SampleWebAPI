@@ -15,33 +15,25 @@ page/size
 <button id="btn_newMsg" onclick="btn_newmsg_click()">NewMsg</button>
 <br/>
 <br/>
-<input id="useCache" type="checkbox" style="vertical-align:middle;"/><label  for="useCache">use cache</label>
+<input id="useCache" type="checkbox" style="vertical-align:middle;"/><label  for="useCache">use front-end cache</label>
 <select id="cacheTime">
     <option value="1">1s</option>
     <option selected value="3">3s</option>
     <option value="5">5s</option>
     <option value="10">10s</option>
     <option value="30">30s</option>
-</select>
+</select>expires
+(custom header x-cache and x-expire)
+<br/>
+<font size="2" color="#008b8b">*還需配合前臺緩存</font>
 <br/>
 <br/>
 <textarea id="text_result" rows="30" cols="120" readonly style="border: 1px solid #DDD;resize:none">
 
 </textarea>
 <script type="text/javascript">
-    function getCacheInfo(){
-        let [cc,ct] = [document.getElementById("useCache").checked,document.getElementById("cacheTime").value]
-        return {
-            headers: {
-                "Cache-Control": cc ? "max-age=" + ct : "no-cache"
-            }
-        }
-    }
-
-    async function  btn_getid_click(){
-        let id=document.getElementById("id_value").value
-        document.getElementById("text_result").value=await fetch("id/" + id,
-            getCacheInfo()
+    function callapi(url,options){
+        return fetch(url,options
         )
         .then(function (response) {
             if (response.status === 200) {
@@ -52,16 +44,21 @@ page/size
         })
     }
 
-    async function  btn_getcount_click(){
-        document.getElementById("text_result").value=await fetch("count",
-            getCacheInfo())
-        .then(function (response) {
-            if (response.status === 200) {
-                return response.text()
+    function getCacheInfo(){
+        let [cc,ct] = [document.getElementById("useCache").checked,document.getElementById("cacheTime").value]
+        return {
+            headers: {
+                "x-cache": cc ? "x-expire=" + ct : "no-cache"
             }
-        }).catch(function (err) {
-            console.log(err)
-        })
+        }
+    }
+
+    async function  btn_getid_click(){
+        document.getElementById("text_result").value=await callapi("id/"+document.getElementById("id_value").value,getCacheInfo())
+    }
+
+    async function  btn_getcount_click(){
+        document.getElementById("text_result").value=await callapi("count",getCacheInfo())
     }
 
     async function  btn_getmsgs_click(){
@@ -71,18 +68,11 @@ page/size
         let size= document.getElementById("page_size").value
         let headers=getCacheInfo()
         headers.headers["Content-Type"]="application/json"
-        let content=await fetch("list/"+page+","+size,headers)
-        .then(function(response) {
-            if(response.status===200) {
-                return response.text()
-            }
-        }).catch(function(err){
-            console.log(err)
-        })
+        let content=await callapi("list/"+page+","+size,headers)
         btn.disabled=false
         document.getElementById("text_result").value=content
     }
-
+    //============================
     let new_msg_tag;
     async function  btn_newmsg_click(){
         if (new_msg_tag===undefined) {
@@ -91,7 +81,7 @@ page/size
                 method: "POST",
                 mode: "cors",
                 headers: {
-                    'Content-Type': 'application/json'
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     "title": "a new title",

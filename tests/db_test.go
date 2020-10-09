@@ -1,5 +1,5 @@
-//+build DB
-
+//+build DBTest
+/
 package tests
 
 import (
@@ -53,14 +53,13 @@ func TestMockOrm(t *testing.T) {
 	}
 }
 
-func NewEipDBHandler(useCache bool) (*msg.EipMsgHandler, error) {
+func NewEipDBHandler() (*msg.EipMsgHandler, error) {
 	handler.InitDB("user=postgres password=sasa dbname=postgres port=5432", true)
 	if dbctl, err := handler.GetInstance(); err != nil {
 		return nil, err
 	} else {
 		return &msg.EipMsgHandler{
-			Control:  dbctl,
-			UseCache: useCache,
+			Control: dbctl,
 		}, nil
 	}
 }
@@ -69,7 +68,7 @@ func Benchmark_DBHandler(b *testing.B) {
 	if testing.Short() {
 		b.Skip("skipping DB static mode")
 	} else {
-		eip, _ := NewEipDBHandler(true)
+		eip, _ := NewEipDBHandler()
 		for i := 0; i < b.N; i++ {
 			eip.GetAll(0, -1)
 			//eip.GetUnread(0, -1)
@@ -83,7 +82,7 @@ func TestDBUpdateHandler(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping DB static mode")
 	} else {
-		eip, _ := NewEipDBHandler(true)
+		eip, _ := NewEipDBHandler()
 		for i := 1; i < 100; i++ {
 			eip.MarkRead(i)
 		}
@@ -98,7 +97,7 @@ func TestDBReadHandler_many_concurrency(t *testing.T) {
 	for i := 0; i < count; i++ {
 		go func(i int) {
 			defer wg.Done()
-			eip, _ := NewEipDBHandler(false) //disable cache
+			eip, _ := NewEipDBHandler() //disable cache
 			eip.GetAll(0, -1)
 
 		}(i)
@@ -115,7 +114,7 @@ func TestDBInsertHandler_many_concurrency(t *testing.T) {
 	for i := 0; i < count; i++ {
 		go func(i int) {
 			defer wg.Done()
-			eip, _ := NewEipDBHandler(true)
+			eip, _ := NewEipDBHandler()
 			eip.New(handler.EipMsg{
 				Title:   fmt.Sprintf("static%d", i),
 				Content: fmt.Sprintf("content is %d", i),
@@ -128,7 +127,7 @@ func TestDBInsertHandler_many_concurrency(t *testing.T) {
 
 //need actual environment
 func TestDBHandler(t *testing.T) {
-	eip, _ := NewEipDBHandler(true)
+	eip, _ := NewEipDBHandler()
 
 	errFunc := func(r interface{}, err error) {
 		if err != nil {
@@ -141,7 +140,7 @@ func TestDBHandler(t *testing.T) {
 
 	errFunc(eip.GetAll(0, 10))
 	// errFunc(eip.GetUnread(0, -1))
-	errFunc(eip.GetIndex(11017))
+	errFunc(eip.GetIndex(66666))
 	errFunc(eip.GetCount())
 	// errFunc(eip.GetUnreadCount())
 

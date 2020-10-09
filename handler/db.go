@@ -178,9 +178,15 @@ func (t *MsgDB) Query(cmd Cmd) (result interface{}, err error) {
 			result = c
 		} else {
 			tx = tx.Find(cmd.Model)
-			result = cmd.Model
+			if tx.RowsAffected > 0 {
+				result = cmd.Model
+			} else {
+				err = errors.New("the query didn't return any data")
+			}
 		}
-		err = tx.Error
+		if err == nil {
+			err = tx.Error
+		}
 		if err != nil {
 			return result, err
 		} else {

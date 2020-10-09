@@ -1,7 +1,11 @@
 [DB]
+#replace with your own db dns
 conn = "user=postgres password=sasa dbname=postgres port=5432"
+#print raw sql
 debug = false
 
 [Server]
+#ip:port
 addr = ":9090"
+#print request log
 debug = true
