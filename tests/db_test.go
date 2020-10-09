@@ -1,5 +1,5 @@
 //+build DBTest
-/
+
 package tests
 
 import (
@@ -65,16 +65,12 @@ func NewEipDBHandler() (*msg.EipMsgHandler, error) {
 }
 
 func Benchmark_DBHandler(b *testing.B) {
-	if testing.Short() {
-		b.Skip("skipping DB static mode")
-	} else {
-		eip, _ := NewEipDBHandler()
-		for i := 0; i < b.N; i++ {
-			eip.GetAll(0, -1)
-			//eip.GetUnread(0, -1)
-			eip.GetCount()
-			//eip.GetUnreadCount()
-		}
+	eip, _ := NewEipDBHandler()
+	for i := 0; i < b.N; i++ {
+		eip.GetAll(0, -1)
+		//eip.GetUnread(0, -1)
+		eip.GetCount()
+		//eip.GetUnreadCount()
 	}
 }
 
@@ -90,7 +86,7 @@ func TestDBUpdateHandler(t *testing.T) {
 	}
 }
 
-func TestDBReadHandler_many_concurrency(t *testing.T) {
+func TestDBReadHandler_concurrency(t *testing.T) {
 	wg := sync.WaitGroup{}
 	count := 500 //many concurrency?
 	wg.Add(count)
@@ -106,7 +102,7 @@ func TestDBReadHandler_many_concurrency(t *testing.T) {
 
 }
 
-func TestDBInsertHandler_many_concurrency(t *testing.T) {
+func TestDBInsertHandler_concurrency(t *testing.T) {
 	wg := sync.WaitGroup{}
 	count := 5000 //many concurrency?
 	wg.Add(count)
