@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"test/handler"
@@ -129,7 +130,7 @@ func main() {
 
 	<-func() <-chan os.Signal {
 		q := make(chan os.Signal, 1)
-		signal.Notify(q, os.Interrupt)
+		signal.Notify(q, os.Interrupt, os.Kill, syscall.SIGTERM)
 		return q
 	}()
 
