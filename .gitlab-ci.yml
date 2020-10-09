@@ -23,13 +23,13 @@ check:
   script:
     #- go fmt $(go list ./... | grep -v /vendor/)
     #- go vet $(go list ./... | grep -v /vendor/)
-    - go test -v -count=1 static/tests #$(go list ./... | grep -v /vendor/)
-    - go test -v -count=1 static/tests -static.bench=. -run=none
+    - go test -v -count=1 test/tests #$(go list ./... | grep -v /vendor/)
+    - go test -v -count=1 test/tests -test.bench=. -run=none
 
 compile:
   stage: build
   script:
-    - go build -race -ldflags "-extldflags '-static'" -o $CI_PROJECT_DIR/binary
+    - go build -race -ldflags -o $CI_PROJECT_DIR/binary
   artifacts:
     name: "$CI_PIPELINE_ID"
     expire_in: 1 week
