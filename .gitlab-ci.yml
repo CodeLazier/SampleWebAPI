@@ -5,7 +5,7 @@ image: golang:latest
 
 variables:
   # Please edit to your GitLab project
-  REPO_NAME: gitlab.com/ntsft/tsvc/prework/rain - msg for webapi
+  REPO_NAME: gitlab.com/ntsft/tsvc/prework/rain/msgTest
 
 before_script:
   - mkdir -p $GOPATH/src/$(dirname $REPO_NAME)
