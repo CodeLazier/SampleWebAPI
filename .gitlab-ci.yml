@@ -5,7 +5,7 @@ image: golang:latest
 
 variables:
   # Please edit to your GitLab project
-  REPO_NAME: gitlab.com/ntsft/tsvc/prework/rain-end
+  REPO_NAME: gitlab.com/ntsft/tsvc/prework/rain - msg for webapi
 
 before_script:
   - mkdir -p $GOPATH/src/$(dirname $REPO_NAME)
@@ -23,8 +23,8 @@ check:
   script:
     #- go fmt $(go list ./... | grep -v /vendor/)
     #- go vet $(go list ./... | grep -v /vendor/)
-    - go static -v -count=1 static/tests #$(go list ./... | grep -v /vendor/)
-    - go static -v -count=1 static/tests -static.bench=. -run=none
+    - go test -v -count=1 static/tests #$(go list ./... | grep -v /vendor/)
+    - go test -v -count=1 static/tests -static.bench=. -run=none
 
 compile:
   stage: build
