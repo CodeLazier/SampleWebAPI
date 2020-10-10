@@ -12,12 +12,12 @@ before_script:
   - cd $GOPATH/src/$REPO_NAME
 
 stages:
-  - static
+  - test
   - build
   - deploy
 
 check:
-  stage: static
+  stage: test
   #allow_failure: true
   script:
     #- go fmt $(go list ./... | grep -v /vendor/)

@@ -1,6 +1,6 @@
 [DB]
 #replace with your own db dns
-conn = "user=postgres password=sasa dbname=postgres port=5432"
+conn = "host=localhost user=postgres password=sasa dbname=postgres port=5432"
 #print raw sql
 debug = false
 
