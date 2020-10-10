@@ -3,8 +3,9 @@ A test project for msg sample and as a sample better practices are implemented.
 All design architectures use golang style as much,may be...
 
 ---
-在綫測試:
-TODO
+
+測試頁面
+TODO:製作測試容器方便測試,在綫部署暫不提供
 
 v1:
 根據ID獲取信息:
