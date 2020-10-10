@@ -32,6 +32,7 @@ type DBConfig struct {
 type ServerConfig struct {
 	Addr     string `toml:"addr"`
 	Debug    bool   `toml:"debug"`
+	UseTLS   bool   `toml:"useTLS"`
 	CertFile string `toml:"cert"`
 	KeyFile  string `toml:"key"`
 }
@@ -77,13 +78,18 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	//TODO CSR x.509(PEM),may also need other formats(DER,P12?)
 	var server *xserver.Server
-	cert, err := tls.LoadX509KeyPair(cfg.Server.CertFile, cfg.Server.KeyFile)
-	if err != nil {
-		log.Println(err)
+	if cfg.Server.UseTLS {
+		cert, err := tls.LoadX509KeyPair(cfg.Server.CertFile, cfg.Server.KeyFile)
+		if err != nil {
+			log.Println(err)
+		} else {
+			server = xserver.NewTLS(cfg.Server.Addr, cert, g)
+		}
+	}
+	if server == nil {
 		server = xserver.New(cfg.Server.Addr, g)
-	} else {
-		server = xserver.NewTLS(cfg.Server.Addr, cert, g)
 	}
 
 	go func() {

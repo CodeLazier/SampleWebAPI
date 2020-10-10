@@ -10,5 +10,6 @@ addr = ":9090"
 #print request log
 debug = true
 
-cert = "cert file"
-key = "key file"
+useTLS = false
+cert = "tls/server.crt"
+key = "tls/server.key"

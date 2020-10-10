@@ -50,27 +50,12 @@ func NewTLS(addr string, cert tls.Certificate, handler http.Handler) *Server {
 	return srv
 }
 
-func (srv *Server) listenAndServe() error {
-	ln, err := srv.Listen()
-	if err != nil {
-		return err
-	}
-	return srv.Serve(ln)
-}
-
-func (srv *Server) listenAndServeTLS(certFile, keyFile string) error {
-	ln, err := srv.Listen()
-	if err != nil {
-		return err
-	}
-	return srv.ServeTLS(ln, certFile, keyFile)
-}
-
 func (srv *Server) Start() error {
 	ln, err := srv.Listen()
 	if err != nil {
 		return err
 	}
+
 	if srv.isTLS() {
 		ln = tls.NewListener(ln, srv.TLSConfig)
 	}
