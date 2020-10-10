@@ -3,6 +3,9 @@ A test project for msg sample and as a sample better practices are implemented.
 All design architectures use golang style as much,may be...
 
 ---
+在綫測試:
+TODO
+
 v1:
 根據ID獲取信息:
 /eip/v1/msg/id/:id

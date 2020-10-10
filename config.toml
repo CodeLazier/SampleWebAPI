@@ -9,3 +9,6 @@ debug = false
 addr = ":9090"
 #print request log
 debug = true
+
+cert = "cert file"
+key = "key file"
