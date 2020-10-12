@@ -3,12 +3,16 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
-	xserver "test/server"
 	"time"
+
+	"test/config"
+	"test/msg"
+	xserver "test/server"
 
 	"test/handler"
 	v "test/v1" //replace vx will if upgrade in the future
@@ -19,26 +23,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type Config struct {
-	DB     DBConfig
-	Server ServerConfig
-}
-
-type DBConfig struct {
-	Conn  string `toml:"conn"`
-	Debug bool   `toml:"debug"`
-}
-
-type ServerConfig struct {
-	Addr     string `toml:"addr"`
-	Debug    bool   `toml:"debug"`
-	UseTLS   bool   `toml:"useTLS"`
-	CertFile string `toml:"cert"`
-	KeyFile  string `toml:"key"`
-}
-
 func main() {
-	cfg := Config{}
+	cfg := config.Config{}
 	if _, err := toml.DecodeFile("./config.toml", &cfg); err != nil {
 		log.Fatalln(err)
 	}
@@ -49,8 +35,22 @@ func main() {
 	g := gin.Default()
 	g.Use(cors.Default()) //Allow *
 	g.LoadHTMLFiles("v1/static/test.html")
-	eip := g.Group("/eip")
 
+	stepEipRouter(g.Group("/eip"))
+
+	//init db
+	handler.InitDB(cfg.DB.Conn, cfg.DB.Debug)
+	msg.NewEipDBHandler(func(eip *msg.EipMsgHandler) {
+		if eip == nil {
+			log.Fatalln(fmt.Errorf("DB connection is failed"))
+		}
+	})
+
+	sawServer(cfg, g)
+
+}
+
+func stepEipRouter(eip *gin.RouterGroup) {
 	{
 		v1 := eip.Group("/v1")
 		v1.Use(v.VerifyToken())
@@ -71,13 +71,9 @@ func main() {
 		v1.GET("/msg/test", v.GetTextContent())
 		//v1.POST("/setMessageMarkRead/:id", v.DoMessagesMarkRead())
 	}
+}
 
-	//init db
-	handler.InitDB(cfg.DB.Conn, cfg.DB.Debug)
-	if _, err := v.NewEipDBHandler(); err != nil {
-		log.Fatalln(err)
-	}
-
+func sawServer(cfg config.Config, g *gin.Engine) {
 	//TODO CSR x.509(PEM),may also need other formats(DER,P12?)
 	var server *xserver.Server
 	if cfg.Server.UseTLS {
@@ -113,5 +109,4 @@ func main() {
 			log.Fatal("Server Shutdown:", err)
 		}
 	}()
-
 }

@@ -2,6 +2,8 @@ package msg
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"time"
 
 	"test/cache"
@@ -32,6 +34,25 @@ const (
 
 	ReadValue int = 1
 )
+
+//call InitDB first
+func NewEipDBHandler(f func(*EipMsgHandler)) {
+	dbctl := handler.GetMsgDB()
+	if dbctl == nil {
+		log.Println(fmt.Errorf("db conn is error"))
+	}
+	if f != nil {
+		func() {
+			defer func() {
+				handler.PutMsgDB(dbctl)
+			}()
+			f(
+				&EipMsgHandler{
+					Control: dbctl,
+				})
+		}()
+	}
+}
 
 func (t *EipMsgHandler) UseCache(useCache bool, cacheTime time.Duration, f func()) {
 	t.useCache, t.cacheTime = useCache, cacheTime

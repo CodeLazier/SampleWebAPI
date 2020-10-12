@@ -3,12 +3,14 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"log"
 	"runtime"
 	"sync"
 	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"test/pool"
 )
 
 type MsgDB struct {
@@ -25,9 +27,6 @@ type MsgDBConfig struct {
 
 var ERR_NO_AFFECTED error = fmt.Errorf("No affected rows")
 
-var _one sync.Once
-var _msgdb *MsgDB
-
 var _DB_DNS string
 var _DB_DEBUG_MODE bool
 
@@ -40,36 +39,55 @@ func InitDB(dns string, debug bool) {
 	}
 }
 
-func GetInstance() (*MsgDB, error) {
-	var err error
+//When it comes to parameter settings, the closure mode cannot be used
+var _one = sync.Once{}
+var _instancePool *pool.LimitPool
+
+func createPool() *pool.LimitPool {
 	_one.Do(func() {
-		cf := func() error {
-			if _msgdb, err = NewMsgDB(MsgDBConfig{
-				DBConn: _DB_DNS,        // "user=postgres password=sasa dbname=postgres port=5432",
-				Debug:  _DB_DEBUG_MODE, //true is output raw sql
+		_instancePool = pool.New(func() interface{} {
+			if msgDB, err := NewMsgDB(MsgDBConfig{
+				DBConn: _DB_DNS,
+				Debug:  _DB_DEBUG_MODE,
 			}); err != nil {
-				return err
+				log.Println(err)
+				return nil
+			} else {
+				return msgDB
 			}
-			return nil
-		}
+		})
 
-		checkf := func() {
-			ticker := time.NewTicker(10 * time.Second)
-			for {
-				<-ticker.C
-				if _msgdb != nil {
-					if err := _msgdb.Ping(); err != nil {
-						cf()
-					}
-				}
-			}
-		}
-
-		if cf() == nil {
-			go checkf()
-		}
 	})
-	return _msgdb, err
+	return _instancePool
+}
+
+func PutMsgDB(m *MsgDB) {
+	createPool().IN <- m
+}
+
+func GetMsgDB() *MsgDB {
+	//singleton instance mode
+	dbpool := createPool()
+	a := time.NewTimer(3 * time.Second)
+	defer a.Stop()
+	//timeout
+	select {
+	case result := <-dbpool.OUT:
+		if result != nil {
+			if err := result.(*MsgDB).Ping(); err != nil {
+				log.Println("db conn is deaded")
+				//retry
+				dbpool.Deinc()
+				return GetMsgDB()
+			} else {
+				return result.(*MsgDB)
+			}
+		}
+
+	case <-a.C:
+		log.Println("db is busy,please wait or retry")
+	}
+	return nil
 }
 
 func NewMsgDB(cfg MsgDBConfig) (*MsgDB, error) {
@@ -139,8 +157,9 @@ func (t *MsgDB) OpenOrm(cfg ...string) error {
 			if t.Cfg.Debug {
 				t.db = t.db.Debug()
 			}
-			db.SetMaxIdleConns(runtime.NumCPU() * 2)
+			db.SetMaxIdleConns(runtime.NumCPU()*2 + 1)
 			//default inifinte
+			db.SetMaxOpenConns(runtime.NumCPU()*2 + 1)
 			//db.SetConnMaxLifetime(time.Hour)
 			return t.Ping()
 		}

@@ -29,9 +29,20 @@ type NewEipMsg struct {
 	result  chan interface{}
 }
 
-type postMsgHandler func(msg NewEipMsg) interface{}
+//test
+func Test_PostNewEipMsg() error {
+	e := NewEipMsg{Title: "test", Content: "test content"}
+	e.result = make(chan interface{})
+	switch v := postMsg(e).(type) {
+	case error:
+		return v
+	case int:
+		return nil
+	}
+	return nil
+}
 
-var postMsg = func() postMsgHandler {
+var postMsg = func() func(msg NewEipMsg) interface{} {
 	msgChan := make(chan NewEipMsg)
 	one := sync.Once{}
 	func() {
@@ -39,19 +50,31 @@ var postMsg = func() postMsgHandler {
 			for i := 0; i < runtime.NumCPU()*8; i++ {
 				go func() {
 					for {
-						msg := <-msgChan
-						if eip, err := NewEipDBHandler(); err == nil {
-							if err := eip.New(handler.EipMsg{
-								Title:   msg.Title,
-								Content: msg.Content,
-							}); err != nil {
-								msg.result <- err
-							} else {
-								msg.result <- 0 // success tag
+						xmsg := <-msgChan
+						msg.NewEipDBHandler(func(eip *msg.EipMsgHandler) {
+							if eip != nil {
+								if err := eip.New(handler.EipMsg{
+									Title:   xmsg.Title,
+									Content: xmsg.Content,
+								}); err != nil {
+									xmsg.result <- err
+								} else {
+									xmsg.result <- 0 // success tag
+								}
 							}
-						} else {
-							log.Fatalln(err)
-						}
+						})
+						//if eip, err := NewEipDBHandler(); err == nil {
+						//	if err := eip.New(handler.EipMsg{
+						//		Title:   msg.Title,
+						//		Content: msg.Content,
+						//	}); err != nil {
+						//		msg.result <- err
+						//	} else {
+						//		msg.result <- 0 // success tag
+						//	}
+						//} else {
+						//	log.Fatalln(err)
+						//}
 					}
 				}()
 			}
@@ -63,15 +86,23 @@ var postMsg = func() postMsgHandler {
 	}
 }()
 
-func NewEipDBHandler() (*msg.EipMsgHandler, error) {
-	if dbctl, err := handler.GetInstance(); err != nil {
-		return nil, err
-	} else {
-		return &msg.EipMsgHandler{
-			Control: dbctl,
-		}, nil
-	}
-}
+//func NewEipDBHandler(f func(*msg.EipMsgHandler)) {
+//	dbctl := handler.GetMsgDB()
+//	if dbctl == nil {
+//		log.Println(fmt.Errorf("db conn is error"))
+//	}
+//	if f != nil {
+//		func() {
+//			defer func() {
+//				handler.PutMsgDB(dbctl)
+//			}()
+//			f(
+//				&msg.EipMsgHandler{
+//					Control: dbctl,
+//				})
+//		}()
+//	}
+//}
 
 //func NewResponseData(r interface{}, err error) ResponseData {
 //	result := ResponseData{
@@ -131,16 +162,17 @@ func processCacheReq(c *gin.Context, f func()) (useCache bool, cacheTime time.Du
 
 func DoGetMessagesCount() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eip, _ := NewEipDBHandler()
-		eip.UseCache(processCacheReq(c, func() {
-			if r, err := eip.GetCount(); err != nil {
-				log.Fatalln(err)
-				//always return error code information instead of http status code
-				c.Status(http.StatusInternalServerError)
-			} else {
-				c.JSON(http.StatusOK, gin.H{"count": r})
-			}
-		}))
+		msg.NewEipDBHandler(func(eip *msg.EipMsgHandler) {
+			eip.UseCache(processCacheReq(c, func() {
+				if r, err := eip.GetCount(); err != nil {
+					log.Fatalln(err)
+					//always return error code information instead of http status code
+					c.Status(http.StatusInternalServerError)
+				} else {
+					c.JSON(http.StatusOK, gin.H{"count": r})
+				}
+			}))
+		})
 	}
 }
 
@@ -163,16 +195,16 @@ func DoGetMessages() gin.HandlerFunc {
 				}
 			}
 		}
-		eip, _ := NewEipDBHandler()
-		eip.UseCache(processCacheReq(c, func() {
-			if msgs, err := eip.GetAll(page*size, size); err != nil {
-				log.Println(err)
-				c.JSON(http.StatusOK, gin.H{"status": err.Error()})
-			} else {
-				c.JSON(http.StatusOK, msgs)
-			}
-		}))
-
+		msg.NewEipDBHandler(func(eip *msg.EipMsgHandler) {
+			eip.UseCache(processCacheReq(c, func() {
+				if msgs, err := eip.GetAll(page*size, size); err != nil {
+					log.Println(err)
+					c.JSON(http.StatusOK, gin.H{"status": err.Error()})
+				} else {
+					c.JSON(http.StatusOK, msgs)
+				}
+			}))
+		})
 	}
 }
 
@@ -201,35 +233,37 @@ func DoNewMessage() gin.HandlerFunc {
 
 func DoMessagesMarkRead() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eip, _ := NewEipDBHandler()
-		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
-			log.Print(err)
-		} else {
-			if err := eip.MarkRead(idx); err != nil {
-				log.Fatalln(err)
+		msg.NewEipDBHandler(func(eip *msg.EipMsgHandler) {
+			if idx, err := strconv.Atoi(c.Param("id")); err != nil {
+				log.Print(err)
 			} else {
-				c.JSON(http.StatusOK, gin.H{"error": 0})
+				if err := eip.MarkRead(idx); err != nil {
+					log.Fatalln(err)
+				} else {
+					c.JSON(http.StatusOK, gin.H{"error": 0})
+				}
 			}
-		}
+		})
 	}
 }
 
 func DoGetMessage() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		eip, _ := NewEipDBHandler()
-		if idx, err := strconv.Atoi(c.Param("id")); err != nil {
-			log.Fatalln(err)
-		} else {
-			eip.UseCache(processCacheReq(c, func() {
-				if emsg, err := eip.GetIndex(idx); err != nil {
-					log.Print(err)
-					//always return error code information instead of http status code
-					c.Status(http.StatusNotFound)
-				} else {
-					c.JSON(http.StatusOK, emsg)
-				}
-			}))
-		}
+		msg.NewEipDBHandler(func(eip *msg.EipMsgHandler) {
+			if idx, err := strconv.Atoi(c.Param("id")); err != nil {
+				log.Fatalln(err)
+			} else {
+				eip.UseCache(processCacheReq(c, func() {
+					if emsg, err := eip.GetIndex(idx); err != nil {
+						log.Print(err)
+						//always return error code information instead of http status code
+						c.Status(http.StatusNotFound)
+					} else {
+						c.JSON(http.StatusOK, emsg)
+					}
+				}))
+			}
+		})
 	}
 }
 
