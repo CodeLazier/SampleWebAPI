@@ -10,32 +10,13 @@ import (
 //wrap http.Server
 type Server struct {
 	*http.Server
-	// Defaults to 0, indicating no limit.
-	MaxConnections int
 }
 
 func (srv *Server) Listen() (net.Listener, error) {
-	//for unix/linux
-
-	//var ln net.Listener
-	//if strings.HasPrefix(srv.Addr, "systemd:") {
-	//	name := srv.Addr[8:]
-	//	listeners, _ := activation.ListenersWithNames()
-	//	listener, ok := listeners[name]
-	//	if !ok {
-	//		return nil, fmt.Errorf("listen systemd %s: socket not found", name)
-	//	}
-	//	ln = listener[0]
-	//} else {
-	//var err error
 	ln, err := net.Listen("tcp", srv.Addr)
 	if err != nil {
 		return nil, err
 	}
-	//}
-	//if srv.MaxConnections > 0 {
-	//	ln = netutil.LimitListener(ln, srv.MaxConnections)
-	//}
 
 	return ln, nil
 }
