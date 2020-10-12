@@ -1,11 +1,3 @@
-/*
- * @Author: your name
- * @Date: 2020-09-29 21:14:24
- * @LastEditTime: 2020-10-06 22:38:31
- * @LastEditors: Please set LastEditors
- * @Description: In User Settings Edit
- * @FilePath: \pre_work\queue\batchqueue.go
- */
 package queue
 
 import (

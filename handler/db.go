@@ -27,7 +27,7 @@ type MsgDBConfig struct {
 
 const WAIT_DBCONN_TIMEOUT = 6 * time.Second
 
-var ERR_NO_AFFECTED error = fmt.Errorf("No affected rows")
+var ERR_NO_AFFECTED = fmt.Errorf("no affected rows")
 
 var _DB_DNS string
 var _DB_DEBUG_MODE bool
@@ -76,6 +76,7 @@ func GetMsgDB() *MsgDB {
 	select {
 	case result := <-dbpool.OUT:
 		if result != nil {
+			//TODO 每次获取均检查心跳,可能再大量并发获取的状况下损害效能.考虑添加时间判断,超过一定时间才会判断
 			if err := result.(*MsgDB).Ping(); err != nil {
 				log.Println("db conn is deaded")
 				//retry
@@ -181,7 +182,7 @@ func (t *MsgDB) Insert(cmd Cmd) (interface{}, error) {
 			return nil, fmt.Errorf("interface is not compatible")
 		}
 	}
-	return nil, errors.New("Open db first")
+	return nil, errors.New("open db first")
 }
 
 func (t *MsgDB) Query(cmd Cmd) (result interface{}, err error) {
@@ -214,7 +215,7 @@ func (t *MsgDB) Query(cmd Cmd) (result interface{}, err error) {
 			return result, nil
 		}
 	}
-	return nil, errors.New("Open db first")
+	return nil, errors.New("open db first")
 }
 
 func (t *MsgDB) Update(cmd Cmd) (err error) {
@@ -239,5 +240,5 @@ func (t *MsgDB) Update(cmd Cmd) (err error) {
 			return nil
 		}
 	}
-	return errors.New("Open db first")
+	return errors.New("open db first")
 }
