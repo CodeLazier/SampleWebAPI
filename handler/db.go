@@ -25,6 +25,8 @@ type MsgDBConfig struct {
 	//
 }
 
+const WAIT_DBCONN_TIMEOUT = 6 * time.Second
+
 var ERR_NO_AFFECTED error = fmt.Errorf("No affected rows")
 
 var _DB_DNS string
@@ -68,7 +70,7 @@ func PutMsgDB(m *MsgDB) {
 func GetMsgDB() *MsgDB {
 	//singleton instance mode
 	dbpool := createPool()
-	a := time.NewTimer(3 * time.Second)
+	a := time.NewTimer(WAIT_DBCONN_TIMEOUT)
 	defer a.Stop()
 	//timeout
 	select {

@@ -12,7 +12,7 @@ import (
 
 	"test/config"
 	"test/msg"
-	xserver "test/server"
+	"test/xserver"
 
 	"test/handler"
 	v "test/v1" //replace vx will if upgrade in the future
@@ -51,26 +51,24 @@ func main() {
 }
 
 func stepEipRouter(eip *gin.RouterGroup) {
-	{
-		v1 := eip.Group("/v1")
-		v1.Use(v.VerifyToken())
+	v1 := eip.Group("/v1")
+	v1.Use(v.VerifyToken())
 
-		//get msg record info,ex: msg/id/39
-		v1.GET("/msg/id/:id", v.DoGetMessage())
-		//fetch msgs info,ex:
-		//all msgs -> "msg/list/" eq 0,-1
-		//fetch msgs -> "msg/list/page,count"
-		//fetch msgs -> "msg/list/page" eq page,30
-		v1.GET("/msg/list/*page", v.DoGetMessages())
-		//create msg record
-		v1.POST("/msg", v.DoNewMessage())
-		//get all msgs count
-		v1.GET("/msg/count", v.DoGetMessagesCount())
-		v1.GET("/getToken", v.GetToken())
-		//test
-		v1.GET("/msg/test", v.GetTextContent())
-		//v1.POST("/setMessageMarkRead/:id", v.DoMessagesMarkRead())
-	}
+	//get msg record info,ex: msg/id/39
+	v1.GET("/msg/id/:id", v.DoGetMessage())
+	//fetch msgs info,ex:
+	//all msgs -> "msg/list/" eq 0,-1
+	//fetch msgs -> "msg/list/page,count"
+	//fetch msgs -> "msg/list/page" eq page,30
+	v1.GET("/msg/list/*page", v.DoGetMessages())
+	//create msg record
+	v1.POST("/msg", v.DoNewMessage())
+	//get all msgs count
+	v1.GET("/msg/count", v.DoGetMessagesCount())
+	v1.GET("/getToken", v.GetToken())
+	//test
+	v1.GET("/msg/test", v.GetTextContent())
+	//v1.POST("/setMessageMarkRead/:id", v.DoMessagesMarkRead())
 }
 
 func sawServer(cfg config.Config, g *gin.Engine) {

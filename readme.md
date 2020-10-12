@@ -5,7 +5,7 @@ All design architectures use golang style as much,may be...
 ---
 
 測試頁面
-TODO:製作測試容器方便測試,在綫部署暫不提供
+TODO:製作測試容器方便測試.在綫部署暫不提供,如有需要callme,提供私有雲供内部測試.
 
 v1:
 根據ID獲取信息:

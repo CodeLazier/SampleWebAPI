@@ -9,7 +9,7 @@ import (
 var MAX_POOL_SIZE int32 = int32(runtime.NumCPU()*2 + 1)
 
 //限制池,包装一个缓存通道,今后可以添加更多控制
-//DB链接时珍贵的有限资源,此限制池严格限制,超出链接获取将等待直到获得(可以有timeout机制)
+//DB链接是珍贵的有限资源,此限制池严格限制,超出链接获取将等待直到获得(可以有timeout机制)
 type LimitPool struct {
 	pool chan interface{}
 	c    int32
