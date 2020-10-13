@@ -1,4 +1,4 @@
-FROM golang:latest
+FROM golang:alpine
 ENV GOPROXY=https://goproxy.cn,https://goproxy.io,direct
 WORKDIR /app
 COPY . .

@@ -25,12 +25,7 @@ check:
     - go test -v -count=1 test/tests #$(go list ./... | grep -v /vendor/)
     - go test -v -count=1 test/tests -test.bench=. -run=none
 
-#compile:
-#  stage: build
-#  script:
-#    - go build -race -ldflags -o $CI_PROJECT_DIR/binary
-#  artifacts:
-#    name: "$CI_PIPELINE_ID"
-#    expire_in: 1 week
-#    paths:
-#      - binary
+compile:
+  stage: build
+  script:
+    - docker run -v "$GOPATH":/go --rm -v "$PWD":/app -w /app -e GOOS="linux" -e GOARCH="amd64" -e GOPROXY="https://goproxy.cn,https://goproxy.io,direct" golang:latest go build -v
