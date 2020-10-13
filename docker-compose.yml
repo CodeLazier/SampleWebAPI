@@ -1,0 +1,17 @@
+version: '3'
+services:
+  postgres:
+    build: db/
+    image: postgres:test
+    container_name: postgres-app
+    ports:
+    - 5432:5432
+
+  test:
+    build: .
+    image: msg-test:latest
+    container_name: msg-test-app
+    ports:
+      - 9090:9090
+    depends_on:
+      - postgres

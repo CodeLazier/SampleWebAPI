@@ -1,23 +1,13 @@
--- ----------------------------
--- Table structure for messages
--- ----------------------------
-DROP TABLE IF EXISTS "public"."messages";
-CREATE TABLE "public"."messages" (
-  "id" int8 NOT NULL DEFAULT nextval('messages_id_seq'::regclass),
-  "title" varchar(255) COLLATE "pg_catalog"."default" NOT NULL,
-  "content" text COLLATE "pg_catalog"."default",
-  "createAt" timestamp(0)
+CREATE TABLE public.messages
+(
+    content text COLLATE pg_catalog."default",
+    id bigserial NOT NULL,
+    title character varying COLLATE pg_catalog."default" NOT NULL,
+    "createAt" timestamp without time zone,
+    CONSTRAINT m_pkey PRIMARY KEY (id)
 )
-;
 
--- ----------------------------
--- Indexes structure for table messages
--- ----------------------------
-CREATE UNIQUE INDEX "id" ON "public"."messages" USING btree (
-  "id" "pg_catalog"."int8_ops" ASC NULLS LAST
-);
+TABLESPACE pg_default;
 
--- ----------------------------
--- Primary Key structure for table messages
--- ----------------------------
-ALTER TABLE "public"."messages" ADD CONSTRAINT "messages_pkey" PRIMARY KEY ("id");
+ALTER TABLE public.messages
+    OWNER to postgres;
