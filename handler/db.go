@@ -15,7 +15,8 @@ import (
 type MsgDB struct {
 	db *gorm.DB
 	sync.RWMutex
-	Cfg MsgDBConfig
+	Cfg   MsgDBConfig
+	RawDB *gorm.DB //test
 }
 
 type MsgDBConfig struct {
@@ -163,6 +164,7 @@ func (t *MsgDB) OpenOrm(cfg ...string) error {
 			//default inifinte
 			db.SetMaxOpenConns(int(pool.MAX_POOL_SIZE))
 			//db.SetConnMaxLifetime(time.Hour)
+			t.RawDB = t.db
 			return t.Ping()
 		}
 	}

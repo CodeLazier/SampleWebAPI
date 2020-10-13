@@ -5,6 +5,7 @@ package tests
 import (
 	"context"
 	"fmt"
+	"log"
 	"math/rand"
 	"runtime"
 	"sync"
@@ -58,7 +59,7 @@ func TestMockOrm(t *testing.T) {
 	}
 }
 
-func NewEipDBHandler2() (*msg.EipMsgHandler, error) {
+func NewDBConn() (*handler.MsgDB, error) {
 	if dbctrl, err := handler.NewMsgDB(
 		handler.MsgDBConfig{
 			DBConn: "host=localhost user=postgres password=sasa dbname=postgres port=5432", // "user=postgres password=sasa dbname=postgres port=5432",
@@ -66,9 +67,7 @@ func NewEipDBHandler2() (*msg.EipMsgHandler, error) {
 		}); err != nil {
 		return nil, err
 	} else {
-		return &msg.EipMsgHandler{
-			Control: dbctrl,
-		}, nil
+		return dbctrl, nil
 	}
 }
 
@@ -114,6 +113,19 @@ func TestDBInsertHandler_concurrency(t *testing.T) {
 		}(i)
 	}
 	wg.Wait()
+}
+
+func TestCreateTable(t *testing.T) {
+	if db, err := NewDBConn(); err != nil {
+		log.Fatalln(err)
+	} else {
+		if !db.RawDB.Migrator().HasTable(&handler.EipMsg{}) {
+			if err = db.RawDB.AutoMigrate(&handler.EipMsg{}); err != nil {
+				log.Fatalln(err)
+			}
+		}
+	}
+
 }
 
 //set flag -v -count=1

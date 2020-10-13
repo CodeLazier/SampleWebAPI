@@ -1,6 +1,0 @@
-FROM library/postgres:latest
-ENV POSTGRES_PASSWORD=sasa
-WORKDIR /
-COPY messages.sql .
-EXPOSE 5432
-#CMD ["psql -U postgres -d postgres -f messages.sql"]

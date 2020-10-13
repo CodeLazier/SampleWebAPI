@@ -42,7 +42,9 @@ func main() {
 	handler.InitDB(cfg.DB.Conn, cfg.DB.Debug)
 	msg.NewEipDBHandler(func(eip *msg.EipMsgHandler) {
 		if eip == nil {
-			log.Fatalln(fmt.Errorf("DB connection is failed"))
+			fmt.Println("DB connection is failed")
+		} else {
+			initDB(cfg)
 		}
 	})
 
@@ -107,4 +109,20 @@ func sawServer(cfg config.Config, g *gin.Engine) {
 			log.Fatal("Server Shutdown:", err)
 		}
 	}()
+}
+
+func initDB(cfg config.Config) error {
+	if dbctrl, err := handler.NewMsgDB(
+		handler.MsgDBConfig{
+			DBConn: cfg.DB.Conn,
+		}); err != nil {
+		return err
+	} else {
+		if !dbctrl.RawDB.Migrator().HasTable(&handler.EipMsg{}) {
+			if err = dbctrl.RawDB.AutoMigrate(&handler.EipMsg{}); err != nil {
+				log.Fatalln(err)
+			}
+		}
+	}
+	return nil
 }
