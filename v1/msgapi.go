@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"runtime"
@@ -61,20 +62,10 @@ var postMsg = func() func(msg NewEipMsg) interface{} {
 								} else {
 									xmsg.result <- 0 // success tag
 								}
+							} else {
+								xmsg.result <- fmt.Errorf("the system is busy, please try again later")
 							}
 						})
-						//if eip, err := NewEipDBHandler(); err == nil {
-						//	if err := eip.New(handler.EipMsg{
-						//		Title:   msg.Title,
-						//		Content: msg.Content,
-						//	}); err != nil {
-						//		msg.result <- err
-						//	} else {
-						//		msg.result <- 0 // success tag
-						//	}
-						//} else {
-						//	log.Fatalln(err)
-						//}
 					}
 				}()
 			}
@@ -165,9 +156,9 @@ func DoGetMessagesCount() gin.HandlerFunc {
 		msg.NewEipDBHandler(func(eip *msg.EipMsgHandler) {
 			eip.UseCache(processCacheReq(c, func() {
 				if r, err := eip.GetCount(); err != nil {
-					log.Fatalln(err)
-					//always return error code information instead of http status code
 					c.Status(http.StatusInternalServerError)
+					//always return error code information instead of http status code
+					log.Fatalln(err)
 				} else {
 					c.JSON(http.StatusOK, gin.H{"count": r})
 				}

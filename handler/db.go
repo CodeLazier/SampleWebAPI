@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"runtime"
 	"sync"
 	"time"
 
@@ -160,9 +159,9 @@ func (t *MsgDB) OpenOrm(cfg ...string) error {
 			if t.Cfg.Debug {
 				t.db = t.db.Debug()
 			}
-			db.SetMaxIdleConns(runtime.NumCPU()*2 + 1)
+			db.SetMaxIdleConns(int(pool.MAX_POOL_SIZE))
 			//default inifinte
-			db.SetMaxOpenConns(runtime.NumCPU()*2 + 1)
+			db.SetMaxOpenConns(int(pool.MAX_POOL_SIZE))
 			//db.SetConnMaxLifetime(time.Hour)
 			return t.Ping()
 		}

@@ -4,24 +4,18 @@ All design architectures use golang style as much,may be...
 
 ---
 
-測試頁面
+測試頁面  
 TODO:製作測試容器方便測試.在綫部署暫不提供,如有需要callme,提供私有雲供内部測試.
 
-v1:
-根據ID獲取信息:
-/eip/v1/msg/id/:id
+| 说明                                     | method | url                            |
+| ---------------------------------------- | ------ | ------------------------------ |
+| 獲取所有條目數量                         | GET    | /eip/v1/msg/count              |
+| 根據ID獲取信息                           | GET    | /eip/v1/msg/id/:id             |
+| 批量獲取,page和size可選,空缺默認全部獲取 | GET    | /eip/v1/msg/list/[page],[size] |
+| 新增                                     | POST   | /eip/v1/msg                    |
+| 簡易測試頁面                             | GET    | /eip/v1/msg/test               |
 
-批量獲取,page和size可選,空缺默認全部獲取:
-/eip/v1/msg/list/[page],[size]
 
-新增:
-/eip/v1/msg
-
-獲取所有條目數量:
-/eip/v1/msg/count
-
-簡易測試頁面:
-/eip/v1/msg/test
 
 未涉及到部分見(同)需求部分.
 

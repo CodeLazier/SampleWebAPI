@@ -6,10 +6,11 @@ import (
 	"sync/atomic"
 )
 
-var MAX_POOL_SIZE int32 = int32(runtime.NumCPU()*2 + 1)
+var MAX_POOL_SIZE = int32(runtime.NumCPU()*2 + 1)
 
-//限制池,包装一个缓存通道,今后可以添加更多控制
+//一个非常简单的限制池,包装一个缓存通道,今后可以添加更多控制实现更多功能
 //DB链接是珍贵的有限资源,此限制池严格限制,超出链接获取将等待直到获得(可以有timeout机制)
+//v0.1 alpha
 type LimitPool struct {
 	pool chan interface{}
 	c    int32
@@ -45,7 +46,6 @@ func (l *LimitPool) get() {
 			l.inc()
 			l.pool <- l.n()
 		}
-		//timeout need maybe
 		l.OUT <- <-l.pool
 		//fmt.Println("Get", data)
 	}
