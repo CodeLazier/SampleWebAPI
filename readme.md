@@ -12,18 +12,19 @@ All design architectures use golang style as much,may be...
 * 日志落地和分割
 * 緩存和分佈式
 * DB橫向擴展
+* 🔥 Hot reload
 
 # Build & Test:
 
 > Linux:  
 >
-> > 1. 下載並安裝docker & docker-compose  
+> > 1. 下載並安裝docker & docker-compose  已有則略過
 > > 2. - `git clone https://gitlab.com/ntsft/tsvc/prework/rain-end.git`
-> >    - 或者下載  [離綫包](https://gitlab.com/ntsft/tsvc/prework/rain-end/-/archive/master/rain-end-master.tar.gz)  
-> > 3. 進入rain-end目錄  
+> >    - 或  [下載離綫包](https://gitlab.com/ntsft/tsvc/prework/rain-end/-/archive/master/rain-end-master.tar.gz)  
+> > 3. 進入repository目錄  
 > > 4.    執行 `docker-compose up --build -d`  
-> >       如果一切順利會成功啓動docker container,並偵聽9090提供webapi服務  
-> > 5. 瀏覽器開啓 http://宿主IP:9090/eip/v1/msg/test  進入測試頁面
+> >       如果一切順利會成功啓動docker container,並偵聽9090對外提供webapi服務  
+> > 5. 瀏覽器開啓 http://IP:9090/eip/v1/msg/test  進入測試頁面
 >
 > > **僅提供測試,資料庫落地區未挂在物理盤,所有資料在container stop后消失**  
 > > **docker版本默認沒有開啓TLS認證,如有需要可以進入修改配置開啓**
@@ -32,18 +33,18 @@ All design architectures use golang style as much,may be...
 
 > Windows:(不推薦,可以虛擬機裏安裝)  
 >
-> > 1. 下載golang安裝包安裝  
-> > 2. 下載postgres安裝包安裝  
-> > 3. 同Linux,clone倉庫進入rain-end目錄  
-> > 4. 開啓config.toml進行資料庫連綫配置  
-> > 5. 執行go build編譯,並執行./test.exe  
+> > 1. ~~下載golang安裝包安裝~~
+> > 2. 下載postgres安裝包安裝  [Download](https://sbp.enterprisedb.com/getfile.jsp?fileid=12851&_ga=2.269118450.286541361.1602680538-371199612.1601476970)
+> > 3. 同Linux,clone倉庫進入repository目錄  
+> > 4. 編修config.toml進行資料庫連綫配置  
+> > 5. 執行`go build`編譯,並執行`./test.exe`  
 > > 6. 瀏覽器執行同Linux
 
 
 
 > MacOS/Other:  
 >
-> > 同Windows
+> > 同Windows,注意下載對應版本
 
 
 

@@ -28,4 +28,11 @@ check:
 compile:
   stage: build
   script:
-    - docker run -v "$GOPATH":/go --rm -v "$PWD":/app -w /app -e GOOS="linux" -e GOARCH="amd64" -e GOPROXY="https://goproxy.cn,https://goproxy.io,direct" golang:latest go build -v
+    - go build
+    - CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build
+    #- docker run -v "$GOPATH":/go --rm -v "$PWD":/app -w /app -e GOOS="linux" -e GOARCH="amd64" -e GOPROXY="https://goproxy.cn,https://goproxy.io,direct" golang:latest go build -v
+  artifacts:
+    name: "$CI_JOB_NAME"
+    paths:
+      - ./test.exe
+      - ./test

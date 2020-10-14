@@ -30,7 +30,7 @@ type NewEipMsg struct {
 	result  chan interface{}
 }
 
-//test
+//test only
 func Test_PostNewEipMsg() error {
 	e := NewEipMsg{Title: "test", Content: "test content"}
 	e.result = make(chan interface{})
@@ -140,7 +140,7 @@ func processCacheReq(c *gin.Context, f func()) (useCache bool, cacheTime time.Du
 			useCache = true
 			cacheTime = 5 * time.Second
 			if v, err := strconv.Atoi(strings.TrimSpace(sp[1])); err != nil {
-				log.Print(err)
+				log.Println(err)
 			} else {
 				cacheTime = time.Duration(v) * time.Second
 			}
@@ -158,7 +158,7 @@ func DoGetMessagesCount() gin.HandlerFunc {
 				if r, err := eip.GetCount(); err != nil {
 					c.Status(http.StatusInternalServerError)
 					//always return error code information instead of http status code
-					log.Fatalln(err)
+					log.Println(err)
 				} else {
 					c.JSON(http.StatusOK, gin.H{"count": r})
 				}
