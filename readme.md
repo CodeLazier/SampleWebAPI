@@ -7,7 +7,7 @@ All design architectures use golang style as much,may be...
 測試頁面  
 TODO:在綫部署暫不提供,如有需要callme,提供私有雲供内部測試.  
 
-# Build:  
+# Build & Test:
 
 > Linux:  
 > 下載並安裝docker & docker-compose  
@@ -18,7 +18,8 @@ TODO:在綫部署暫不提供,如有需要callme,提供私有雲供内部測試.
 > 如果一切順利會啓動二個docker container,並偵聽9090提供webapi服務  
 > 瀏覽器開啓 http://宿主IP/eip/v1/msg/test  進入測試頁面  
 > *僅提供測試,資料庫未挂在物理盤,所有資料在container stop后消失  
-> *如果遇到執行權限問題,請給sh script加上.chmod 777 *.sh
+> *~~如果遇到執行權限問題,請給sh script加上.chmod 777 *.sh~~  
+> *docker版本默認沒有開啓TLS認證,如有需要可以進入修改配置開啓
 
 > Windows:  
 > 下載golang安裝包安裝  
@@ -30,8 +31,6 @@ TODO:在綫部署暫不提供,如有需要callme,提供私有雲供内部測試.
 
 > MacOS/Other:  
 > 未提供
-
-
 
 
 
