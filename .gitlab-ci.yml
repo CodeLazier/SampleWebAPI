@@ -36,3 +36,5 @@ compile:
     paths:
       - ./test.exe
       - ./test
+      - ./config.toml
+      - ./tls/
