@@ -17,11 +17,14 @@ TODO:在綫部署暫不提供,如有需要callme,提供私有雲供内部測試.
 > >    - 或者下載  [離綫包](https://gitlab.com/ntsft/tsvc/prework/rain-end/-/archive/master/rain-end-master.tar.gz)  
 > >    
 > > 3.    進入rain-end目錄  
+> >
 > > 4.    執行 docker-compose up --build -d  
 > >       如果一切順利會啓動二個docker container,並偵聽9090提供webapi服務  
-> > 
-> > 5.    瀏覽器開啓 http://宿主IP:9090/eip/v1/msg/test  進入測試頁面  
-> > 
+> >
+> > 5.    瀏覽器開啓 http://宿主IP:9090/eip/v1/msg/test  進入測試頁面
+> >
+> >      
+> >      
 > >      **僅提供測試,資料庫未挂在物理盤,所有資料在container stop后消失  
 > >       ~~如果遇到執行權限問題,請給sh script加上.chmod 777 *.sh~~  
 > >       docker版本默認沒有開啓TLS認證,如有需要可以進入修改配置開啓**
