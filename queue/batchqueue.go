@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+//批量写,提高大量请求写时的效率
 type BatchActionsHandler func([]interface{}) error
 
 var _queue *BatchQueue

@@ -38,7 +38,7 @@ func main() {
 
 	stepEipRouter(g.Group("/eip"))
 
-	//init db
+	//init and test db
 	handler.InitDB(cfg.DB.Conn, cfg.DB.Debug)
 	msg.NewEipDBHandler(func(eip *msg.EipMsgHandler) {
 		if eip == nil {

@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+//一个简单的cache实现,够用就好.根据需求实现LRU/LFU
 type CacheCtl interface {
 	Add(key interface{}, item CacheItem) error
 	Get(key interface{}) (CacheItem, error)

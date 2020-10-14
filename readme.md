@@ -8,7 +8,7 @@ All design architectures use golang style as much,may be...
 
 * 構建CD:Register Docker Hub or gitlab docker hub工作流可以自動pull image方便部署和測試
 * 對部署進行benchmark測試已檢測DB和API瓶頸,自動采樣pprof,對優化調校提供依據
-* 接入Api geteway,並對鏈路監控,預警,追溯,指標采樣,日志,融斷,降級,負載平衡,服務發現...等等高可用實現
+* 接入api geteway,並對鏈路監控,預警,追溯,指標采樣,日志,融斷,降級,負載平衡,服務發現...等等高可用實現
 * 日志落地和分割
 * 緩存和分佈式
 * DB橫向擴展
@@ -18,19 +18,15 @@ All design architectures use golang style as much,may be...
 > Linux:  
 >
 > > 1. 下載並安裝docker & docker-compose  
-> >
-> > 2. - git clone https://gitlab.com/ntsft/tsvc/prework/rain-end.git  
+> > 2. - `git clone https://gitlab.com/ntsft/tsvc/prework/rain-end.git`
 > >    - 或者下載  [離綫包](https://gitlab.com/ntsft/tsvc/prework/rain-end/-/archive/master/rain-end-master.tar.gz)  
-> >    
-> > 3.    進入rain-end目錄  
-> >
-> > 4.    執行 docker-compose up --build -d  
-> >       如果一切順利會啓動二個docker container,並偵聽9090提供webapi服務  
-> >
-> > 5.    瀏覽器開啓 http://宿主IP:9090/eip/v1/msg/test  進入測試頁面
+> > 3. 進入rain-end目錄  
+> > 4.    執行 `docker-compose up --build -d`  
+> >       如果一切順利會成功啓動docker container,並偵聽9090提供webapi服務  
+> > 5. 瀏覽器開啓 http://宿主IP:9090/eip/v1/msg/test  進入測試頁面
 >
-**僅提供測試,資料庫落地區未挂在物理盤,所有資料在container stop后消失**  
-**docker版本默認沒有開啓TLS認證,如有需要可以進入修改配置開啓**
+> > **僅提供測試,資料庫落地區未挂在物理盤,所有資料在container stop后消失**  
+> > **docker版本默認沒有開啓TLS認證,如有需要可以進入修改配置開啓**
 
 
 
