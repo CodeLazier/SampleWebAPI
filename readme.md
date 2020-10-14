@@ -5,7 +5,33 @@ All design architectures use golang style as much,may be...
 ---
 
 測試頁面  
-TODO:製作測試容器方便測試.在綫部署暫不提供,如有需要callme,提供私有雲供内部測試.
+TODO:在綫部署暫不提供,如有需要callme,提供私有雲供内部測試.  
+
+# Build:  
+
+> Linux:  
+> 下載並安裝docker & docker-compose  
+> git clone https://gitlab.com/ntsft/tsvc/prework/rain-end.git  
+> 進入rain-end目錄  
+> 執行 docker-compose up --build  
+> 如果一切順利會啓動二個docker container,並偵聽9090提供webapi服務  
+> 瀏覽器開啓 http://宿主IP/eip/v1/msg/test  進入測試頁面  
+> *僅提供測試,資料庫未挂在物理盤,所有資料在container stop后消失
+
+> Windows:  
+> 下載golang安裝包安裝  
+> 下載postgres安裝包安裝  
+> 同Linux,clone倉庫進入rain-end目錄  
+> 開啓config.toml進行資料庫連綫配置  
+> 執行go build編譯,並執行./test.exe  
+> 瀏覽器執行同Linux
+
+> MacOS/Other:  
+> 未提供
+
+
+
+
 
 | 说明                                     | method | url                            |
 | ---------------------------------------- | ------ | ------------------------------ |

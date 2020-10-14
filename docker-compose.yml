@@ -3,8 +3,8 @@ services:
   postgres:
     image: library/postgres:latest
     container_name: postgres-app
-    ports:
-    - 5432:5432
+    networks:
+      - msg-test-network
 
     environment:
       - POSTGRES_PASSWORD=sasa
@@ -14,8 +14,13 @@ services:
     build: .
     image: msg-test:latest
     container_name: msg-test-app
-    command: ./wait-for-it.sh localhost:5432
     ports:
       - 9090:9090
+    networks:
+      - msg-test-network
     depends_on:
       - postgres
+
+
+networks:
+  msg-test-network:
