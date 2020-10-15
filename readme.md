@@ -48,6 +48,12 @@ All design architectures use golang style as much,may be...
 
 
 
+---
+
+###### 關於TLS
+
+tls目錄下存放了測試的公鑰和密鑰,在config.toml中開啓useTLS=true,重新啓動程式將啓用TLS認證模式.(沒有啓用雙向認證),驗證client的身份應該配合其他權限策略
+
 | 说明                                     | method | url                            |
 | ---------------------------------------- | ------ | ------------------------------ |
 | 獲取所有條目數量                         | GET    | /eip/v1/msg/count              |

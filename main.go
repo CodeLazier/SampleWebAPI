@@ -28,12 +28,11 @@ import (
 var curPath string
 
 func main() {
-	//TODO 增加配置文件的hotreload实现,虽然没有什么好实时改变的,数据库的Debug模式?
+	//TODO 增加配置文件的hot reload实现,虽然没有什么好实时改变的,数据库的Debug模式?
 	curPath = getCurPath()
 	cfgFile := filepath.Join(curPath, "config.toml")
 	if !fileExist(cfgFile) {
-		log.Println(cfgFile)
-		log.Fatalln("cfg file is not found")
+		log.Fatalln("cfg file is not found", cfgFile)
 	} else {
 		fmt.Println("config is reading...", cfgFile)
 	}
