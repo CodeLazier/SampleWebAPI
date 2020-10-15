@@ -44,7 +44,7 @@ func main() {
 		if eip == nil {
 			fmt.Println("DB connection is failed")
 		} else {
-			initDB(cfg)
+			installDB(cfg)
 		}
 	})
 
@@ -111,7 +111,7 @@ func sawServer(cfg config.Config, g *gin.Engine) {
 	}()
 }
 
-func initDB(cfg config.Config) error {
+func installDB(cfg config.Config) error {
 	if dbctrl, err := handler.NewMsgDB(
 		handler.MsgDBConfig{
 			DBConn: cfg.DB.Conn,

@@ -37,7 +37,7 @@ All design architectures use golang style as much,may be...
 > > 2. 下載postgres安裝包安裝  [Download](https://sbp.enterprisedb.com/getfile.jsp?fileid=12851&_ga=2.269118450.286541361.1602680538-371199612.1601476970)
 > > 3. 同Linux,clone倉庫進入repository目錄  
 > > 4. 編修config.toml進行資料庫連綫配置  
-> > 5. 執行`go build`編譯,並執行`./test.exe`  
+> > 5. 執行`./test.exe`  
 > > 6. 瀏覽器執行同Linux
 
 
@@ -66,11 +66,13 @@ TABLE
 messages
 
 PROPERTIES  
+
+```javascript
 id: int64  
 title: string  
 content: string  
 createAt: time
-
+```
 APIs  
 // 獲取單筆訊息通知  
 METHOD  
@@ -78,12 +80,17 @@ GET
 PATH  
 /v1/msg/{id}   
 RETURN  
-{  
-	id,  
+
+```json
+{
+    id,  
 	title,  
 	content,  
 	createAt  
 }
+```
+
+
 
 // 獲取訊息通知列表  
 METHOD  
@@ -91,14 +98,17 @@ GET
 PATH  
 /v1/msg/{page}/list  
 RETURN  
-[  
+
+```json
+[
 	{  
 		id,  
 		title,  
 		content,  
 		createAt  
-	}  
+	}
 ]
+```
 
 // 新增訊息通知  
 METHOD  
@@ -106,11 +116,18 @@ POST
 PATH  
 /v1/msg  
 DATA  
-{  
+
+```json
+{
 	title,  
 	content  
 }  
+```
+
 RETURN  
-{  
+
+```json
+{
 	status  
 }
+```

@@ -38,7 +38,7 @@ const (
 //NewEipDBHandler :fun helper wrap dbpool,new or get db conn in dbpool,automatically release after use
 //but do not copy to external func to prevent the connection from to recycled
 //call InitDB first if it has not been called
-//提供自己的dbpool的根本原因是gorm或者其提供的db driver中的pool根本不靠谱,实测postgres/sqlite再大量并发模式下均有连接错误或写入失败问题
+//提供自己的dbpool的根本原因是gorm或者其提供的db driver中的pool根本不靠谱(或许有某些神秘参数?),实测postgres/sqlite再大量并发模式下均有连接错误或写入失败问题
 //另外一个原因是方便自己调度和控制.控制权再自己手里.
 //并发测试见测试用例.1w并发下无写入和连接错误,再大也没问题.但量大效率会下降.需要db的横向扩展和多读单写策略,这里就暂不考虑了
 func NewEipDBHandler(f func(*EipMsgHandler)) {
