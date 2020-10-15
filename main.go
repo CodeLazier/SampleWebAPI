@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -23,9 +25,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var curPath string
+
 func main() {
+	//TODO 增加配置文件的hotreload实现,虽然没有什么好实时改变的,数据库的Debug模式?
+	curPath = getCurPath()
+	cfgFile := filepath.Join(curPath, "config.toml")
+	if !fileExist(cfgFile) {
+		log.Println(cfgFile)
+		log.Fatalln("cfg file is not found")
+	} else {
+		fmt.Println("config is reading...", cfgFile)
+	}
 	cfg := config.Config{}
-	if _, err := toml.DecodeFile("./config.toml", &cfg); err != nil {
+	if _, err := toml.DecodeFile(cfgFile, &cfg); err != nil {
 		log.Fatalln(err)
 	}
 	if !cfg.Server.Debug {
@@ -50,6 +63,27 @@ func main() {
 
 	sawServer(cfg, g)
 
+}
+
+func fileExist(path string) bool {
+	_, err := os.Lstat(path)
+	return !os.IsNotExist(err)
+}
+
+func getCurPath() string {
+	if path, err := os.Executable(); err != nil {
+		return "."
+	} else {
+		ext := strings.ToLower(filepath.Ext(path))
+		if !(ext == "" || ext == ".exe") {
+			if r, err := filepath.EvalSymlinks(path); err != nil {
+				return "."
+			} else {
+				return r
+			}
+		}
+		return filepath.Dir(path)
+	}
 }
 
 func stepEipRouter(eip *gin.RouterGroup) {
@@ -77,11 +111,28 @@ func sawServer(cfg config.Config, g *gin.Engine) {
 	//TODO CSR x.509(PEM),may also need other formats(DER,P12?)
 	var server *xserver.Server
 	if cfg.Server.UseTLS {
-		cert, err := tls.LoadX509KeyPair(cfg.Server.CertFile, cfg.Server.KeyFile)
-		if err != nil {
-			log.Println(err)
+		//test file is exist
+		check := func(f string) string {
+			if !fileExist(f) {
+				if fileExist(filepath.Join(curPath, f)) {
+					return filepath.Join(curPath, f)
+				}
+				return ""
+			}
+			return f
+		}
+		cfg.Server.CertFile = check(cfg.Server.CertFile)
+		cfg.Server.KeyFile = check(cfg.Server.KeyFile)
+		if cfg.Server.CertFile != "" && cfg.Server.KeyFile != "" {
+			log.Println("use", cfg.Server.CertFile, cfg.Server.KeyFile)
+			cert, err := tls.LoadX509KeyPair(cfg.Server.CertFile, cfg.Server.KeyFile)
+			if err != nil {
+				log.Println(err)
+			} else {
+				server = xserver.NewTLS(cfg.Server.Addr, cert, g)
+			}
 		} else {
-			server = xserver.NewTLS(cfg.Server.Addr, cert, g)
+			log.Println("crt or key file is not exist")
 		}
 	}
 	if server == nil {
