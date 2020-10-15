@@ -68,9 +68,9 @@ messages
 PROPERTIES  
 
 ```javascript
-id: int64  
-title: string  
-content: string  
+id: int64
+title: string
+content: string
 createAt: time
 ```
 APIs  
@@ -81,12 +81,12 @@ PATH
 /v1/msg/{id}   
 RETURN  
 
-```json
+```javascript
 {
-    id,  
-	title,  
-	content,  
-	createAt  
+    id,
+	title,
+    content,
+	createAt
 }
 ```
 
@@ -99,13 +99,13 @@ PATH
 /v1/msg/{page}/list  
 RETURN  
 
-```json
+```javascript
 [
 	{  
-		id,  
-		title,  
-		content,  
-		createAt  
+		id,
+		title,
+		content,
+		createAt
 	}
 ]
 ```
@@ -117,17 +117,17 @@ PATH
 /v1/msg  
 DATA  
 
-```json
+```javascript
 {
-	title,  
-	content  
+	title,
+	content
 }  
 ```
 
 RETURN  
 
-```json
+```javascript
 {
-	status  
+	status
 }
 ```
