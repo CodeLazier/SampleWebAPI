@@ -2,7 +2,7 @@ A test project for msg sample and as a sample better practices are implemented.
 
 All design architectures use golang style as much,may be...
 
-#### TODO:
+#### Possibility TODO:
 
   **大部分概念和實驗級证明,并不考慮穩定和效能**
 
@@ -83,10 +83,10 @@ RETURN
 
 ```javascript
 {
-    id,
-	title,
-    content,
-	createAt
+  id,
+  title,
+  content,
+  createAt
 }
 ```
 
@@ -101,12 +101,12 @@ RETURN
 
 ```javascript
 [
-	{  
-		id,
-		title,
-		content,
-		createAt
-	}
+  {  
+    id,
+    title,
+    content,
+    createAt
+  }
 ]
 ```
 
@@ -119,8 +119,8 @@ DATA
 
 ```javascript
 {
-	title,
-	content
+  title,
+  content
 }  
 ```
 
@@ -128,6 +128,6 @@ RETURN
 
 ```javascript
 {
-	status
+  status
 }
 ```
