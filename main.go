@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/arl/statsviz"
 	"test/config"
 	"test/msg"
 	"test/xserver"
@@ -49,6 +51,7 @@ func main() {
 	g.LoadHTMLFiles("v1/static/test.html")
 
 	stepEipRouter(g.Group("/eip"))
+	sawServer(cfg, g)
 
 	//init and test db
 	handler.InitDB(cfg.DB.Conn, cfg.DB.Debug)
@@ -59,9 +62,6 @@ func main() {
 			installDB(cfg)
 		}
 	})
-
-	sawServer(cfg, g)
-
 }
 
 func fileExist(path string) bool {
@@ -144,6 +144,10 @@ func sawServer(cfg config.Config, g *gin.Engine) {
 		}
 	}()
 
+	if cfg.Server.Debug {
+		registerPprof()
+	}
+
 	<-func() <-chan os.Signal {
 		q := make(chan os.Signal, 1)
 		signal.Notify(q, os.Interrupt, os.Kill, syscall.SIGTERM)
@@ -175,4 +179,13 @@ func installDB(cfg config.Config) error {
 		}
 	}
 	return nil
+}
+
+func registerPprof() {
+	mux := http.NewServeMux()
+	statsviz.Register(mux)
+	statsviz.RegisterDefault()
+	go func() {
+		http.ListenAndServe(":9091", mux)
+	}()
 }
