@@ -33,7 +33,7 @@ All design architectures use golang style as much,may be...
 
 > Windows:(不推薦,可以虛擬機裏安裝)  
 >
-> > 1. ~~下載golang安裝包安裝~~ [去往Pipeline下載](https://gitlab.com/ntsft/tsvc/prework/rain-end/-/pipelines)
+> > 1. ~~下載golang安裝包安裝~~ [去往Pipeline下載](https://gitlab.com/ntsft/tsvc/prework/rain-end/-/pipelines) 或者 [發行版](https://gitlab.com/ntsft/tsvc/prework/rain-end/-/releases) 自行構建或取得已編譯版本
 > > 2. 下載postgres安裝包安裝  [Download](https://sbp.enterprisedb.com/getfile.jsp?fileid=12851&_ga=2.269118450.286541361.1602680538-371199612.1601476970)
 > > 3. 同Linux,clone倉庫進入repository目錄  
 > > 4. 編修config.toml進行資料庫連綫配置  
