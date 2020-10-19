@@ -130,15 +130,12 @@ func VerifyToken() gin.HandlerFunc {
 }
 
 func processCacheReq(c *gin.Context, f func()) (useCache bool, cacheTime time.Duration, fun func()) {
-	useCache = false
-	cacheTime = 0 * time.Second
-	fun = f
+	useCache, cacheTime, fun = false, 0*time.Second, f
 	cc := strings.ToLower(c.GetHeader("x-cache"))
 	if strings.Contains(cc, "x-expire") {
 		sp := strings.Split(cc, "=")
 		if len(sp) > 0 {
-			useCache = true
-			cacheTime = 5 * time.Second
+			useCache, cacheTime = true, 5*time.Second
 			if v, err := strconv.Atoi(strings.TrimSpace(sp[1])); err != nil {
 				log.Println(err)
 			} else {
@@ -169,9 +166,8 @@ func DoGetMessagesCount() gin.HandlerFunc {
 
 func DoGetMessages() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var page, size int
+		var page, size = 0, -1
 		var err error
-		size = -1
 		p := c.Param("page")
 		if p != "" && p != "/" {
 			s := strings.Split(p[1:], ",")

@@ -25,31 +25,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var curPath string
+var CUR_PATH = getCurPath()
 
 func main() {
-	//TODO 增加配置文件的hot reload实现,虽然没有什么好实时改变的,数据库的Debug模式?
-	curPath = getCurPath()
-	cfgFile := filepath.Join(curPath, "config.toml")
-	if !fileExist(cfgFile) {
-		log.Fatalln("cfg file is not found", cfgFile)
-	} else {
-		fmt.Println("config is reading...", cfgFile)
-	}
-	cfg := config.Config{}
-	if _, err := toml.DecodeFile(cfgFile, &cfg); err != nil {
-		log.Fatalln(err)
-	}
-	if !cfg.Server.Debug {
-		gin.SetMode(gin.ReleaseMode)
-	}
+	cfg := loadConfig()
+	g := initGin(cfg)
+	initDB(cfg)
+	sawServer(cfg, g)
+}
 
-	g := gin.Default()
-	g.Use(cors.Default()) //Allow *
-	g.LoadHTMLFiles("v1/static/test.html")
-
-	stepEipRouter(g.Group("/eip"))
-
+func initDB(cfg config.Config) {
 	//init and test db
 	handler.InitDB(cfg.DB.Conn, cfg.DB.Debug)
 	msg.NewEipDBHandler(func(eip *msg.EipMsgHandler) {
@@ -59,9 +44,34 @@ func main() {
 			installDB(cfg)
 		}
 	})
+}
 
-	sawServer(cfg, g)
+func initGin(cfg config.Config) *gin.Engine {
+	if !cfg.Server.Debug {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
+	g := gin.Default()
+	g.Use(cors.Default()) //Allow *
+	g.LoadHTMLFiles("v1/static/test.html")
+
+	stepEipRouter(g.Group("/eip"))
+	return g
+}
+
+func loadConfig() config.Config {
+	//TODO 增加配置文件的hot reload实现,虽然没有什么好实时改变的,数据库的Debug模式?
+	cfgFile := filepath.Join(CUR_PATH, "config.toml")
+	if !fileExist(cfgFile) {
+		log.Fatalln("cfg file is not found", cfgFile)
+	} else {
+		fmt.Println("config is reading...", cfgFile)
+	}
+	cfg := config.Config{}
+	if _, err := toml.DecodeFile(cfgFile, &cfg); err != nil {
+		log.Fatalln(err)
+	}
+	return cfg
 }
 
 func fileExist(path string) bool {
@@ -113,8 +123,8 @@ func sawServer(cfg config.Config, g *gin.Engine) {
 		//test file is exist
 		check := func(f string) string {
 			if !fileExist(f) {
-				if fileExist(filepath.Join(curPath, f)) {
-					return filepath.Join(curPath, f)
+				if fileExist(filepath.Join(CUR_PATH, f)) {
+					return filepath.Join(CUR_PATH, f)
 				}
 				return ""
 			}

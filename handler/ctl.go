@@ -54,7 +54,7 @@ func NewMultiRecords(start, count int) Cmd {
 		Model: &msgs,
 		Start: start,
 		Count: count,
-		Order: "\"id\" desc", // ID为自增字段,createAt为创建时间,所以createAt可能会有重复(大并发量),但Id不会
+		Order: "\"id\" desc", // ID为自增字段,createAt为创建时间,所以createAt可能会有重复(大并发量,取决于某些DB的时间精度),但Id不会
 	}
 }
 

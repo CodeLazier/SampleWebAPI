@@ -45,17 +45,18 @@ func NewEipDBHandler(f func(*EipMsgHandler)) {
 	dbctl := handler.GetMsgDB()
 	if dbctl == nil {
 		log.Println(fmt.Errorf("db conn is error"))
-	}
-	if f != nil {
-		func() {
-			defer func() {
-				handler.PutMsgDB(dbctl)
+	} else {
+		if f != nil {
+			func() {
+				defer func() {
+					handler.PutMsgDB(dbctl)
+				}()
+				f(
+					&EipMsgHandler{
+						Control: dbctl,
+					})
 			}()
-			f(
-				&EipMsgHandler{
-					Control: dbctl,
-				})
-		}()
+		}
 	}
 }
 
