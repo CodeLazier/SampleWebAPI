@@ -65,6 +65,7 @@ tls目錄下存放了測試的公鑰和密鑰,在config.toml中開啓useTLS=true
 | 批量獲取,page和size可選,空缺默認全部獲取 | GET    | /eip/v1/msg/list/[page],[size] |
 | 新增                                     | POST   | /eip/v1/msg                    |
 | 簡易測試頁面                             | GET    | /eip/v1/msg/test               |
+| pprof指標頁面 (默認在9091 port)          | GET    | /debug/statsviz                |
 
 
 

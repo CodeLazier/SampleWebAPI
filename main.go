@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/arl/statsviz"
 	"test/config"
 	"test/msg"
 	"test/xserver"
@@ -29,9 +31,8 @@ var CUR_PATH = getCurPath()
 
 func main() {
 	cfg := loadConfig()
-	g := initGin(cfg)
 	initDB(cfg)
-	sawServer(cfg, g)
+	sawServer(cfg, initGin(cfg))
 }
 
 func initDB(cfg config.Config) {
@@ -154,6 +155,10 @@ func sawServer(cfg config.Config, g *gin.Engine) {
 		}
 	}()
 
+	if cfg.Server.Debug {
+		registerPprof()
+	}
+
 	<-func() <-chan os.Signal {
 		q := make(chan os.Signal, 1)
 		signal.Notify(q, os.Interrupt, os.Kill, syscall.SIGTERM)
@@ -185,4 +190,13 @@ func installDB(cfg config.Config) error {
 		}
 	}
 	return nil
+}
+
+func registerPprof() {
+	mux := http.NewServeMux()
+	statsviz.Register(mux)
+	statsviz.RegisterDefault()
+	go func() {
+		http.ListenAndServe(":9091", mux)
+	}()
 }
