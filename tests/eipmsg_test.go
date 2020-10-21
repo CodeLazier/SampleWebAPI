@@ -180,10 +180,13 @@ func TestBatchQueue(t *testing.T) {
 }
 
 func TestRateLimite(t *testing.T) {
-	r := ratelimite.NewTokenBucket(10)
+	r := ratelimite.NewTokenBucket(1)
 
 	for i := 0; i < 10; i++ {
-		r.RequestToken(3)
-		log.Println("get token is ok")
+		if r.RequestTokenTimeout(2, 1*time.Second) {
+			log.Println("get token is ok")
+		} else {
+			log.Println("get token is timeout")
+		}
 	}
 }

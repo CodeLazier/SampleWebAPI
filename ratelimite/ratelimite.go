@@ -15,25 +15,34 @@ type TokenBucket struct {
 }
 
 func (tb *TokenBucket) RequestTokenTimeout(n int, duration time.Duration) bool {
+	if duration < time.Second {
+		duration = time.Second
+	}
+	t := time.NewTimer(duration)
+	defer t.Stop()
 	select {
-	case <-tb.requestToken(n):
+	case n = <-tb.requestToken(n):
+		tb.consume(n)
 		return true
-	case <-time.After(duration):
+	case <-t.C:
 		return false
 	}
 }
 
-func (tb *TokenBucket) requestToken(n int) <-chan struct{} {
-	tb.Lock()
-	defer tb.Unlock()
+func (tb *TokenBucket) consume(n int) {
+	tb.surplus -= n
+	tb.endTime = time.Now()
+}
+
+func (tb *TokenBucket) requestToken(n int) <-chan int {
 	ticker := time.NewTicker(16 * time.Millisecond)
-	result := make(chan struct{})
+	result := make(chan int)
 	go func() {
+		tb.Lock()
 		defer func() {
 			ticker.Stop()
-			tb.endTime = time.Now()
-			tb.surplus -= n
-			result <- struct{}{}
+			tb.Unlock()
+			result <- n
 		}()
 		for n > tb.surplus {
 			//计算应该可以下放的请求数
@@ -46,7 +55,7 @@ func (tb *TokenBucket) requestToken(n int) <-chan struct{} {
 }
 
 func (tb *TokenBucket) RequestToken(n int) {
-	<-tb.requestToken(n)
+	tb.consume(<-tb.requestToken(n))
 }
 
 //@rate 速率(秒)
