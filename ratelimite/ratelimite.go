@@ -14,7 +14,16 @@ type TokenBucket struct {
 	sync.Mutex
 }
 
-func (tb *TokenBucket) RequestToken(n int) {
+func (tb *TokenBucket) RequestTokenTimeout(n int, duration time.Duration) bool {
+	select {
+	case <-tb.requestToken(n):
+		return true
+	case <-time.After(duration):
+		return false
+	}
+}
+
+func (tb *TokenBucket) requestToken(n int) <-chan struct{} {
 	tb.Lock()
 	defer tb.Unlock()
 	ticker := time.NewTicker(16 * time.Millisecond)
@@ -33,7 +42,11 @@ func (tb *TokenBucket) RequestToken(n int) {
 			<-ticker.C
 		}
 	}()
-	<-result
+	return result
+}
+
+func (tb *TokenBucket) RequestToken(n int) {
+	<-tb.requestToken(n)
 }
 
 //@rate 速率(秒)

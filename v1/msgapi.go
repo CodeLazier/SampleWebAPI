@@ -55,21 +55,24 @@ var postMsg = func() func(msg NewEipMsg) interface{} {
 				go func() {
 					for {
 						xmsg := <-msgChan
-						tokenBucket.RequestToken(1) //请求获取处理量,直到系统允许通过
-						msg.NewEipDBHandler(func(eip *msg.EipMsgHandler) {
-							if eip != nil {
-								if err := eip.New(handler.EipMsg{
-									Title:   xmsg.Title,
-									Content: xmsg.Content,
-								}); err != nil {
-									xmsg.result <- err
+						if tokenBucket.RequestTokenTimeout(1, 3*time.Second) { //请求获取处理量,直到系统允许通过,超出指定时间则放弃
+							msg.NewEipDBHandler(func(eip *msg.EipMsgHandler) {
+								if eip != nil {
+									if err := eip.New(handler.EipMsg{
+										Title:   xmsg.Title,
+										Content: xmsg.Content,
+									}); err != nil {
+										xmsg.result <- err
+									} else {
+										xmsg.result <- 0 // success tag
+									}
 								} else {
-									xmsg.result <- 0 // success tag
+									xmsg.result <- fmt.Errorf("the system is busy, please try again later")
 								}
-							} else {
-								xmsg.result <- fmt.Errorf("the system is busy, please try again later")
-							}
-						})
+							})
+						} else {
+							xmsg.result <- fmt.Errorf("too many requests, please try again later")
+						}
 					}
 				}()
 			}
