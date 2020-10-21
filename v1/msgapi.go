@@ -12,6 +12,7 @@ import (
 
 	"test/handler"
 	"test/msg"
+	"test/ratelimite"
 
 	"github.com/gin-gonic/gin"
 )
@@ -46,12 +47,15 @@ func Test_PostNewEipMsg() error {
 var postMsg = func() func(msg NewEipMsg) interface{} {
 	msgChan := make(chan NewEipMsg)
 	one := sync.Once{}
+	//我们假设单台资料TPS是300,我们限制每秒最多处理300笔New需求
+	tokenBucket := ratelimite.NewTokenBucket(300)
 	func() {
 		one.Do(func() {
 			for i := 0; i < runtime.NumCPU()*8; i++ {
 				go func() {
 					for {
 						xmsg := <-msgChan
+						tokenBucket.RequestToken(1) //请求获取处理量,直到系统允许通过
 						msg.NewEipDBHandler(func(eip *msg.EipMsgHandler) {
 							if eip != nil {
 								if err := eip.New(handler.EipMsg{

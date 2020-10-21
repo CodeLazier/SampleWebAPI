@@ -13,6 +13,7 @@ import (
 	"test/cache"
 	"test/handler"
 	"test/queue"
+	"test/ratelimite"
 )
 
 type Snowflake struct {
@@ -176,4 +177,13 @@ func TestBatchQueue(t *testing.T) {
 	}
 	time.Sleep(2 * time.Second)
 
+}
+
+func TestRateLimite(t *testing.T) {
+	r := ratelimite.NewTokenBucket(10)
+
+	for i := 0; i < 10; i++ {
+		r.RequestToken(3)
+		log.Println("get token is ok")
+	}
 }
