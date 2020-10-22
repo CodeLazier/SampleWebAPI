@@ -35,10 +35,10 @@ func (tb *TokenBucket) consume(n int) {
 }
 
 func (tb *TokenBucket) requestToken(n int) <-chan int {
-	ticker := time.NewTicker(16 * time.Millisecond)
 	result := make(chan int)
 	go func() {
 		tb.Lock()
+		ticker := time.NewTicker(16 * time.Millisecond)
 		defer func() {
 			ticker.Stop()
 			tb.Unlock()
